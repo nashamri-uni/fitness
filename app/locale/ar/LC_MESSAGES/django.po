@@ -1,0 +1,1096 @@
+# Arabic translations for the Workout and Fitness Planner.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FitPlanner\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 11:54+0000\n"
+"PO-Revision-Date: 2026-10-16 12:00+0000\n"
+"Last-Translator: FitPlanner\n"
+"Language-Team: Arabic\n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
+"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
+
+#: accounts/models.py:10
+msgid "User"
+msgstr "مستخدم"
+
+#: accounts/models.py:11 templates/accounts/profile.html:11
+msgid "Administrator"
+msgstr "مدير"
+
+#: accounts/models.py:14
+msgid "Male"
+msgstr "ذكر"
+
+#: accounts/models.py:15
+msgid "Female"
+msgstr "أنثى"
+
+#: accounts/models.py:16
+msgid "Prefer not to say"
+msgstr "لا أفضّل الإجابة"
+
+#: accounts/models.py:18
+msgid "Gender"
+msgstr "الجنس"
+
+#: accounts/models.py:24 exercises/models.py:161
+msgid "Role"
+msgstr "الدور"
+
+#: accounts/models.py:33
+msgid "user"
+msgstr "مستخدم"
+
+#: accounts/models.py:34
+msgid "users"
+msgstr "المستخدمون"
+
+#: accounts/models.py:49
+msgid "Date of birth"
+msgstr "تاريخ الميلاد"
+
+#: accounts/models.py:50
+msgid "Height (cm)"
+msgstr "الطول (سم)"
+
+#: accounts/models.py:51 plans/models.py:92
+#: templates/workouts/active_session.html:40
+#: templates/workouts/session_detail.html:35 workouts/models.py:86
+msgid "Weight (kg)"
+msgstr "الوزن (كغ)"
+
+#: accounts/models.py:52
+msgid "Fitness goal"
+msgstr "الهدف اللياقي"
+
+#: accounts/models.py:57
+msgid "user profile"
+msgstr "ملف المستخدم"
+
+#: accounts/models.py:58
+msgid "user profiles"
+msgstr "ملفات المستخدمين"
+
+#: accounts/views.py:19
+msgid "Account created successfully. You are now logged in."
+msgstr "تم إنشاء الحساب بنجاح. أنت الآن مسجّل الدخول."
+
+#: accounts/views.py:37
+msgid "Profile updated."
+msgstr "تم تحديث الملف الشخصي."
+
+#: exercises/models.py:28
+msgid "Upper body"
+msgstr "الجزء العلوي"
+
+#: exercises/models.py:29
+msgid "Lower body"
+msgstr "الجزء السفلي"
+
+#: exercises/models.py:30
+msgid "Core"
+msgstr "الجذع"
+
+#: exercises/models.py:32 exercises/models.py:52 exercises/models.py:78
+#: plans/models.py:21 templates/exercises/manage.html:18
+#: templates/plans/list.html:16 workouts/models.py:21
+msgid "Name"
+msgstr "الاسم"
+
+#: exercises/models.py:38
+msgid "Body region"
+msgstr "منطقة الجسم"
+
+#: exercises/models.py:44
+msgid "muscle group"
+msgstr "مجموعة عضلية"
+
+#: exercises/models.py:45
+msgid "muscle groups"
+msgstr "المجموعات العضلية"
+
+#: exercises/models.py:57 exercises/models.py:58
+msgid "equipment"
+msgstr "المعدات"
+
+#: exercises/models.py:68 plans/models.py:11
+msgid "Strength"
+msgstr "قوة"
+
+#: exercises/models.py:69 plans/models.py:13
+msgid "Cardio"
+msgstr "كارديو"
+
+#: exercises/models.py:70
+msgid "Flexibility"
+msgstr "مرونة"
+
+#: exercises/models.py:71
+msgid "Balance"
+msgstr "توازن"
+
+#: exercises/models.py:74
+msgid "Beginner"
+msgstr "مبتدئ"
+
+#: exercises/models.py:75
+msgid "Intermediate"
+msgstr "متوسط"
+
+#: exercises/models.py:76
+msgid "Advanced"
+msgstr "متقدم"
+
+#: exercises/models.py:79 plans/models.py:22
+msgid "Description"
+msgstr "الوصف"
+
+#: exercises/models.py:80 templates/exercises/detail.html:16
+msgid "Instructions"
+msgstr "التعليمات"
+
+#: exercises/models.py:86 templates/exercises/library.html:33
+#: templates/exercises/manage.html:20
+msgid "Difficulty"
+msgstr "المستوى"
+
+#: exercises/models.py:93
+msgid "Exercise type"
+msgstr "نوع التمرين"
+
+#: exercises/models.py:95
+msgid "Image"
+msgstr "الصورة"
+
+#: exercises/models.py:96
+msgid "Video URL"
+msgstr "رابط الفيديو"
+
+#: exercises/models.py:97 templates/exercises/manage.html:23
+msgid "Active"
+msgstr "نشط"
+
+#: exercises/models.py:105
+msgid "Created by"
+msgstr "أنشأه"
+
+#: exercises/models.py:111
+msgid "exercise"
+msgstr "تمرين"
+
+#: exercises/models.py:112
+msgid "exercises"
+msgstr "تمارين"
+
+#: exercises/models.py:139
+msgid "Primary"
+msgstr "أساسي"
+
+#: exercises/models.py:140
+msgid "Secondary"
+msgstr "ثانوي"
+
+#: exercises/models.py:147 exercises/models.py:183
+#: templates/analytics/dashboard.html:61 templates/analytics/progress.html:19
+#: templates/workouts/records.html:14
+msgid "Exercise"
+msgstr "التمرين"
+
+#: exercises/models.py:154 templates/exercises/library.html:15
+msgid "Muscle group"
+msgstr "المجموعة العضلية"
+
+#: exercises/models.py:168
+msgid "exercise muscle group"
+msgstr "المجموعة العضلية للتمرين"
+
+#: exercises/models.py:169
+msgid "exercise muscle groups"
+msgstr "المجموعات العضلية للتمارين"
+
+#: exercises/models.py:190 templates/exercises/detail.html:29
+#: templates/exercises/library.html:24 templates/exercises/manage.html:22
+msgid "Equipment"
+msgstr "المعدات"
+
+#: exercises/models.py:197 exercises/models.py:198
+msgid "exercise equipment"
+msgstr "معدات التمرين"
+
+#: exercises/views.py:78
+msgid "Only administrators can manage the exercise library."
+msgstr "فقط المدير يمكنه إدارة مكتبة التمارين."
+
+#: exercises/views.py:99
+msgid "Exercise '%(name)s' added."
+msgstr "تمت إضافة التمرين '%(name)s'."
+
+#: exercises/views.py:103 templates/plans/detail.html:29
+msgid "Add exercise"
+msgstr "إضافة تمرين"
+
+#: exercises/views.py:113
+msgid "Exercise '%(name)s' updated."
+msgstr "تم تحديث التمرين '%(name)s'."
+
+#: exercises/views.py:117
+msgid "Edit exercise"
+msgstr "تعديل التمرين"
+
+#: exercises/views.py:125
+msgid "Exercise '%(name)s' deleted."
+msgstr "تم حذف التمرين '%(name)s'."
+
+#: plans/models.py:12
+msgid "Hypertrophy"
+msgstr "تضخم عضلي"
+
+#: plans/models.py:14
+msgid "Endurance"
+msgstr "تحمل"
+
+#: plans/models.py:15
+msgid "Weight loss"
+msgstr "إنقاص الوزن"
+
+#: plans/models.py:16
+msgid "Maintenance"
+msgstr "محافظة"
+
+#: plans/models.py:23 templates/plans/list.html:17
+msgid "Goal"
+msgstr "الهدف"
+
+#: plans/models.py:25
+msgid "Estimated duration (minutes)"
+msgstr "المدة المقدرة (دقائق)"
+
+#: plans/models.py:27
+msgid "Created at"
+msgstr "تاريخ الإنشاء"
+
+#: plans/models.py:28
+msgid "Updated at"
+msgstr "تاريخ التحديث"
+
+#: plans/models.py:32
+msgid "workout plan"
+msgstr "خطة تدريب"
+
+#: plans/models.py:33
+msgid "workout plans"
+msgstr "خطط التدريب"
+
+#: plans/models.py:61 workouts/models.py:63
+msgid "Order"
+msgstr "الترتيب"
+
+#: plans/models.py:62 workouts/models.py:25 workouts/models.py:64
+msgid "Notes"
+msgstr "الملاحظات"
+
+#: plans/models.py:63
+msgid "Rest seconds"
+msgstr "ثوانٍ الراحة"
+
+#: plans/models.py:70
+msgid "plan exercise"
+msgstr "تمرين في الخطة"
+
+#: plans/models.py:71
+msgid "plan exercises"
+msgstr "تمارين الخطة"
+
+#: plans/models.py:81
+msgid "Normal"
+msgstr "عادي"
+
+#: plans/models.py:82
+msgid "Warm-up"
+msgstr "إحماء"
+
+#: plans/models.py:83
+msgid "Drop set"
+msgstr "سلسلة تنازلية"
+
+#: plans/models.py:84
+msgid "To failure"
+msgstr "حتى الفشل العضلي"
+
+#: plans/models.py:89 workouts/models.py:84
+msgid "Set number"
+msgstr "رقم المجموعة"
+
+#: plans/models.py:90 templates/plans/detail.html:47
+#: templates/workouts/active_session.html:39
+#: templates/workouts/session_detail.html:34
+msgid "Reps"
+msgstr "التكرارات"
+
+#: plans/models.py:91 workouts/models.py:87
+msgid "Duration (seconds)"
+msgstr "المدة (ثوانٍ)"
+
+#: plans/models.py:93
+msgid "Set type"
+msgstr "نوع المجموعة"
+
+#: plans/models.py:97
+msgid "planned set"
+msgstr "مجموعة مخططة"
+
+#: plans/models.py:98
+msgid "planned sets"
+msgstr "المجموعات المخططة"
+
+#: plans/views.py:32
+msgid "Added %(name)s to the plan."
+msgstr "تمت إضافة %(name)s إلى الخطة."
+
+#: plans/views.py:62
+msgid "Plan '%(name)s' created. Add exercises to it."
+msgstr "تم إنشاء الخطة '%(name)s'. أضف إليها التمارين."
+
+#: plans/views.py:66
+msgid "Create plan"
+msgstr "إنشاء خطة"
+
+#: plans/views.py:77
+msgid "Plan updated."
+msgstr "تم تحديث الخطة."
+
+#: plans/views.py:81 templates/plans/detail.html:19
+msgid "Edit plan"
+msgstr "تعديل الخطة"
+
+#: plans/views.py:90
+msgid "Plan deleted."
+msgstr "تم حذف الخطة."
+
+#: plans/views.py:103
+msgid "Exercise settings saved."
+msgstr "تم حفظ إعدادات التمرين."
+
+#: plans/views.py:114
+msgid "Exercise removed from the plan."
+msgstr "تمت إزالة التمرين من الخطة."
+
+#: plans/views.py:129
+msgid "Set %(number)s saved for %(name)s."
+msgstr "تم حفظ المجموعة %(number)s لـ %(name)s."
+
+#: plans/views.py:131
+msgid "Invalid set values. Please correct them and try again."
+msgstr "قيم المجموعة غير صحيحة. يرجى تصحيحها والمحاولة مجددًا."
+
+#: plans/views.py:141
+msgid "Set removed."
+msgstr "تمت إزالة المجموعة."
+
+#: templates/accounts/login.html:4 templates/accounts/login.html:8
+#: templates/accounts/login.html:13 templates/base.html:53
+msgid "Log in"
+msgstr "تسجيل الدخول"
+
+#: templates/accounts/login.html:18
+msgid "No account yet? <a href=\"%(register_url)s\">Register</a>."
+msgstr "ليس لديك حساب؟ <a href=\"%(register_url)s\">سجّل الآن</a>."
+
+#: templates/accounts/profile.html:4 templates/accounts/profile.html:8
+#: templates/base.html:24
+msgid "Profile"
+msgstr "الملف الشخصي"
+
+#: templates/accounts/profile.html:10
+msgid "Signed in as <strong>%(username)s</strong>."
+msgstr "مسجّل الدخول باسم <strong>%(username)s</strong>."
+
+#: templates/accounts/profile.html:16
+msgid "Account"
+msgstr "الحساب"
+
+#: templates/accounts/profile.html:19
+msgid "Fitness preferences"
+msgstr "تفضيلات اللياقة"
+
+#: templates/accounts/profile.html:23
+msgid "Save changes"
+msgstr "حفظ التغييرات"
+
+#: templates/accounts/register.html:4 templates/accounts/register.html:13
+#: templates/base.html:54
+msgid "Register"
+msgstr "تسجيل"
+
+#: templates/accounts/register.html:8
+msgid "Create an account"
+msgstr "إنشاء حساب"
+
+#: templates/analytics/dashboard.html:4 templates/base.html:19
+msgid "Dashboard"
+msgstr "لوحة التحكم"
+
+#: templates/analytics/dashboard.html:8
+msgid "Analytics dashboard"
+msgstr "لوحة التحليلات"
+
+#: templates/analytics/dashboard.html:10 templates/base.html:22
+msgid "Sessions"
+msgstr "الجلسات"
+
+#: templates/analytics/dashboard.html:11
+msgid "Sessions (12 weeks)"
+msgstr "الجلسات (12 أسبوع)"
+
+#: templates/analytics/dashboard.html:12
+msgid "Sets logged"
+msgstr "المجموعات المسجّلة"
+
+#: templates/analytics/dashboard.html:13
+msgid "Total volume (kg)"
+msgstr "الحجم الكلي (كغ)"
+
+#: templates/analytics/dashboard.html:14
+msgid "Average session"
+msgstr "متوسط الجلسة"
+
+#: templates/analytics/dashboard.html:14 templates/plans/list.html:32
+#: templates/workouts/session_list.html:32
+msgid "min"
+msgstr "دقيقة"
+
+#: templates/analytics/dashboard.html:15
+msgid "Average RPE"
+msgstr "متوسط الجهد"
+
+#: templates/analytics/dashboard.html:16 templates/workouts/records.html:4
+#: templates/workouts/records.html:8
+msgid "Personal records"
+msgstr "الأرقام الشخصية"
+
+#: templates/analytics/dashboard.html:17
+msgid "Weekly streak"
+msgstr "التتابع الأسبوعي"
+
+#: templates/analytics/dashboard.html:22
+msgid "Weekly training volume"
+msgstr "حجم التدريب الأسبوعي"
+
+#: templates/analytics/dashboard.html:24
+msgid "Weekly volume (kg)"
+msgstr "الحجم الأسبوعي (كجم)"
+
+#: templates/analytics/dashboard.html:25 templates/analytics/dashboard.html:36
+#: templates/workouts/session_detail.html:36
+#: templates/workouts/session_list.html:19
+msgid "Volume (kg)"
+msgstr "الحجم (كغ)"
+
+#: templates/analytics/dashboard.html:26
+msgid "Log at least one completed set to see your progress chart."
+msgstr "سجّل مجموعة واحدة مكتملة على الأقل لعرض رسم التقدم."
+
+#: templates/analytics/dashboard.html:27
+msgid "Chart library is unavailable, but the numbers are shown in the table."
+msgstr "مكتبة الرسوم غير متوفرة، لكن الأرقام معروضة في الجدول."
+
+#: templates/analytics/dashboard.html:35
+msgid "Week"
+msgstr "الأسبوع"
+
+#: templates/analytics/dashboard.html:37 templates/plans/list.html:19
+#: templates/workouts/session_list.html:18
+msgid "Sets"
+msgstr "المجموعات"
+
+#: templates/analytics/dashboard.html:55
+msgid "Improvement per exercise"
+msgstr "التحسّن لكل تمرين"
+
+#: templates/analytics/dashboard.html:62
+msgid "First logged"
+msgstr "أول تسجيل"
+
+#: templates/analytics/dashboard.html:63
+msgid "Current best"
+msgstr "الأفضل حاليًا"
+
+#: templates/analytics/dashboard.html:64 templates/analytics/progress.html:22
+msgid "Change"
+msgstr "التغيّر"
+
+#: templates/analytics/dashboard.html:80
+msgid "Log a weighted set to start tracking improvement."
+msgstr "سجّل مجموعة بأوزان لبدء تتبع التحسّن."
+
+#: templates/analytics/dashboard.html:85
+msgid "Recent personal records"
+msgstr "أحدث الأرقام الشخصية"
+
+#: templates/analytics/dashboard.html:90
+msgid "%(name)s — %(type)s: %(value)s (%(date)s)"
+msgstr "%(name)s — %(type)s: %(value)s (%(date)s)"
+
+#: templates/analytics/dashboard.html:95
+msgid "No personal records yet."
+msgstr "لا توجد أرقام شخصية بعد."
+
+#: templates/analytics/dashboard.html:100
+msgid "Recent sessions"
+msgstr "أحدث الجلسات"
+
+#: templates/analytics/dashboard.html:107
+msgid "%(date)s, %(minutes)s min"
+msgstr "%(date)s، %(minutes)s دقيقة"
+
+#: templates/analytics/dashboard.html:114
+msgid ""
+"No sessions yet. <a href=\"%(plans_url)s\">Pick a plan</a> and start "
+"training."
+msgstr "لا جلسات بعد. <a href=\"%(plans_url)s\">اختر خطة</a> وابدأ التدريب."
+
+#: templates/analytics/progress.html:4
+msgid "Progress"
+msgstr "التقدّم"
+
+#: templates/analytics/progress.html:8
+msgid "Exercise progress over time"
+msgstr "تقدّم التمارين عبر الزمن"
+
+#: templates/analytics/progress.html:13
+msgid "Improvement metrics"
+msgstr "مؤشرات التحسّن"
+
+#: templates/analytics/progress.html:20
+msgid "First logged (kg)"
+msgstr "أول تسجيل (كغ)"
+
+#: templates/analytics/progress.html:21
+msgid "Current best (kg)"
+msgstr "الأفضل حاليًا (كغ)"
+
+#: templates/analytics/progress.html:38
+msgid "No progress data yet. Log a few weighted sets first."
+msgstr "لا توجد بيانات تقدّم بعد. سجّل بعض المجموعات الموزّنة أولًا."
+
+#: templates/base.html:10
+msgid "Workout and Fitness Planner"
+msgstr "مخطط التمارين واللياقة"
+
+#: templates/base.html:17
+msgid "FitPlanner"
+msgstr "FitPlanner"
+
+#: templates/base.html:20 templates/exercises/library.html:4
+#: templates/exercises/library.html:8
+msgid "Exercise Library"
+msgstr "مكتبة التمارين"
+
+#: templates/base.html:21
+msgid "My Plans"
+msgstr "خططي"
+
+#: templates/base.html:23
+msgid "Records"
+msgstr "الأرقام"
+
+#: templates/base.html:26
+msgid "Manage"
+msgstr "الإدارة"
+
+#: templates/base.html:33
+msgid "Language"
+msgstr "اللغة"
+
+#: templates/base.html:42
+msgid "Switch"
+msgstr "تغيير"
+
+#: templates/base.html:50
+msgid "Log out"
+msgstr "تسجيل الخروج"
+
+#: templates/base.html:73
+msgid "Workout and Fitness Planner — Django project"
+msgstr "مخطط التمارين واللياقة — مشروع Django"
+
+#: templates/exercises/confirm_delete.html:4
+#: templates/exercises/confirm_delete.html:8
+msgid "Delete exercise"
+msgstr "حذف التمرين"
+
+#: templates/exercises/confirm_delete.html:10
+msgid ""
+"Are you sure you want to delete <strong>%(name)s</strong>? All plan and "
+"session entries that reference it will also be removed."
+msgstr "هل أنت متأكد من حذف <strong>%(name)s</strong>؟ جميع إدخالات الخطة والجلسات المرتبطة به ستُحذف أيضًا."
+
+#: templates/exercises/confirm_delete.html:15
+#: templates/plans/confirm_delete.html:15
+msgid "Yes, delete"
+msgstr "نعم، احذف"
+
+#: templates/exercises/confirm_delete.html:16 templates/exercises/form.html:14
+#: templates/plans/confirm_delete.html:16 templates/plans/form.html:14
+msgid "Cancel"
+msgstr "إلغاء"
+
+#: templates/exercises/detail.html:11
+msgid "inactive"
+msgstr "غير نشط"
+
+#: templates/exercises/detail.html:20
+msgid "No instructions recorded."
+msgstr "لا توجد تعليمات مسجّلة."
+
+#: templates/exercises/detail.html:23
+msgid "Target muscles"
+msgstr "العضلات المستهدفة"
+
+#: templates/exercises/detail.html:25
+msgid "None"
+msgstr "لا شيء"
+
+#: templates/exercises/detail.html:31
+msgid "Bodyweight / none"
+msgstr "بوزن الجسم / لا شيء"
+
+#: templates/exercises/detail.html:34
+msgid "Demonstration video"
+msgstr "فيديو توضيحي"
+
+#: templates/exercises/detail.html:37
+msgid "Add to a plan"
+msgstr "إضافة إلى خطة"
+
+#: templates/exercises/detail.html:38
+msgid "Back to library"
+msgstr "العودة إلى المكتبة"
+
+#: templates/exercises/form.html:13 templates/plans/form.html:13
+msgid "Save"
+msgstr "حفظ"
+
+#: templates/exercises/library.html:11
+msgid "Search"
+msgstr "بحث"
+
+#: templates/exercises/library.html:12
+msgid "Exercise name"
+msgstr "اسم التمرين"
+
+#: templates/exercises/library.html:17 templates/exercises/library.html:26
+#: templates/exercises/library.html:35 templates/exercises/library.html:44
+msgid "All"
+msgstr "الكل"
+
+#: templates/exercises/library.html:42 templates/exercises/manage.html:19
+#: templates/plans/detail.html:50
+msgid "Type"
+msgstr "النوع"
+
+#: templates/exercises/library.html:51
+msgid "Apply filters"
+msgstr "تطبيق الفلاتر"
+
+#: templates/exercises/library.html:76
+msgid "Previous"
+msgstr "السابق"
+
+#: templates/exercises/library.html:79
+msgid "Page %(number)s of %(total)s"
+msgstr "صفحة %(number)s من %(total)s"
+
+#: templates/exercises/library.html:82
+msgid "Next"
+msgstr "التالي"
+
+#: templates/exercises/library.html:86
+msgid "No exercises match the current filters."
+msgstr "لا توجد تمارين تطابق الفلاتر الحالية."
+
+#: templates/exercises/manage.html:4
+msgid "Manage exercise library"
+msgstr "إدارة مكتبة التمارين"
+
+#: templates/exercises/manage.html:8
+msgid "Exercise library management"
+msgstr "إدارة مكتبة التمارين"
+
+#: templates/exercises/manage.html:11
+msgid "Administrator only. <a href=\"%(create_url)s\">Add a new exercise</a>"
+msgstr "للمدير فقط. <a href=\"%(create_url)s\">إضافة تمرين جديد</a>"
+
+#: templates/exercises/manage.html:21
+msgid "Muscle groups"
+msgstr "المجموعات العضلية"
+
+#: templates/exercises/manage.html:35
+msgid "Yes"
+msgstr "نعم"
+
+#: templates/exercises/manage.html:35
+msgid "No"
+msgstr "لا"
+
+#: templates/exercises/manage.html:36
+msgid "yes"
+msgstr "نعم"
+
+#: templates/exercises/manage.html:36
+msgid "no"
+msgstr "لا"
+
+#: templates/exercises/manage.html:38
+msgid "Edit"
+msgstr "تعديل"
+
+#: templates/exercises/manage.html:39
+msgid "Delete"
+msgstr "حذف"
+
+#: templates/plans/confirm_delete.html:4 templates/plans/detail.html:20
+msgid "Delete plan"
+msgstr "حذف الخطة"
+
+#: templates/plans/confirm_delete.html:8
+msgid "Delete workout plan"
+msgstr "حذف خطة التدريب"
+
+#: templates/plans/confirm_delete.html:10
+msgid ""
+"Are you sure you want to delete <strong>%(name)s</strong>? Its exercises and "
+"planned sets will be removed. Logged sessions are kept."
+msgstr "هل أنت متأكد من حذف <strong>%(name)s</strong>؟ تمارينها ومجموعاتها المخططة ستُحذف. الجلسات المسجّلة تبقى."
+
+#: templates/plans/detail.html:10
+msgid ""
+"Goal: %(goal)s &middot; estimated %(duration)s minutes &middot; updated on "
+"%(updated)s"
+msgstr "الهدف: %(goal)s &middot; المقدّر %(duration)s دقيقة &middot; آخر تحديث %(updated)s"
+
+#: templates/plans/detail.html:17
+msgid "Start a session from this plan"
+msgstr "بدء جلسة من هذه الخطة"
+
+#: templates/plans/detail.html:25
+msgid "Add exercise to the routine"
+msgstr "إضافة تمرين إلى الروتين"
+
+#: templates/plans/detail.html:38
+msgid "Rest %(rest)ss"
+msgstr "راحة %(rest)s ثانية"
+
+#: templates/plans/detail.html:46 templates/workouts/active_session.html:38
+#: templates/workouts/session_detail.html:33
+msgid "Set"
+msgstr "المجموعة"
+
+#: templates/plans/detail.html:48 templates/workouts/active_session.html:41
+#: templates/workouts/session_detail.html:37
+#: templates/workouts/session_list.html:17
+msgid "Duration"
+msgstr "المدة"
+
+#: templates/plans/detail.html:49
+msgid "Target weight"
+msgstr "الوزن المستهدف"
+
+#: templates/plans/detail.html:65
+msgid "Remove"
+msgstr "إزالة"
+
+#: templates/plans/detail.html:70
+msgid "No sets defined yet."
+msgstr "لا توجد مجموعات معرّفة بعد."
+
+#: templates/plans/detail.html:79
+msgid "Add set"
+msgstr "إضافة مجموعة"
+
+#: templates/plans/detail.html:86
+msgid "Save exercise settings"
+msgstr "حفظ إعدادات التمرين"
+
+#: templates/plans/detail.html:87
+msgid "Remove exercise"
+msgstr "إزالة التمرين"
+
+#: templates/plans/detail.html:93
+msgid "This plan has no exercises yet. Use the form above to add some."
+msgstr "هذه الخطة لا تحتوي على تمارين بعد. استخدم النموذج أعلاه لإضافة بعضها."
+
+#: templates/plans/list.html:4
+msgid "My plans"
+msgstr "خططي"
+
+#: templates/plans/list.html:8
+msgid "My workout plans"
+msgstr "خطط التدريب الخاصة بي"
+
+#: templates/plans/list.html:9
+msgid "Create new plan"
+msgstr "إنشاء خطة جديدة"
+
+#: templates/plans/list.html:18
+msgid "Exercises"
+msgstr "التمارين"
+
+#: templates/plans/list.html:20
+msgid "Est. duration"
+msgstr "المدة المقدّرة"
+
+#: templates/plans/list.html:21
+msgid "Created"
+msgstr "أُنشئت"
+
+#: templates/plans/list.html:37
+msgid "Start session"
+msgstr "بدء جلسة"
+
+#: templates/plans/list.html:46
+msgid "You have no plans yet. Create one and add exercises from the library."
+msgstr "لا توجد لديك خطط بعد. أنشئ خطة وأضف إليها تمارين من المكتبة."
+
+#: templates/workouts/active_session.html:4
+msgid "Active session"
+msgstr "جلسة جارية"
+
+#: templates/workouts/active_session.html:8
+msgid "Active session: %(name)s"
+msgstr "جلسة جارية: %(name)s"
+
+#: templates/workouts/active_session.html:10
+msgid "Started %(started)s &middot; %(elapsed)s minutes elapsed"
+msgstr "بدأت %(started)s &middot; مضت %(elapsed)s دقيقة"
+
+#: templates/workouts/active_session.html:12
+msgid "plan"
+msgstr "الخطة"
+
+#: templates/workouts/active_session.html:16
+msgid "Sets logged so far: %(sets)s &middot; volume: %(volume)s kg"
+msgstr "المجموعات المسجّلة حتى الآن: %(sets)s &middot; الحجم: %(volume)s كغ"
+
+#: templates/workouts/active_session.html:25
+msgid "Planned:"
+msgstr "المخططة:"
+
+#: templates/workouts/active_session.html:28
+msgid "set %(number)s: %(reps)s reps @ %(weight)s kg"
+msgstr "المجموعة %(number)s: %(reps)s تكرار @ %(weight)s كغ"
+
+#: templates/workouts/active_session.html:42
+#: templates/workouts/session_detail.html:38 workouts/models.py:88
+msgid "RPE"
+msgstr "الجهد"
+
+#: templates/workouts/active_session.html:43
+#: templates/workouts/active_session.html:54
+#: templates/workouts/session_detail.html:39
+msgid "PR"
+msgstr "رقم شخصي"
+
+#: templates/workouts/active_session.html:57
+msgid "Nothing logged yet."
+msgstr "لم يُسجّل شيء بعد."
+
+#: templates/workouts/active_session.html:66
+msgid "Log set"
+msgstr "تسجيل مجموعة"
+
+#: templates/workouts/active_session.html:72
+msgid "Finish session"
+msgstr "إنهاء الجلسة"
+
+#: templates/workouts/active_session.html:76
+msgid "Complete session"
+msgstr "إكمال الجلسة"
+
+#: templates/workouts/records.html:15
+msgid "Record"
+msgstr "السجل"
+
+#: templates/workouts/records.html:16 workouts/models.py:128
+msgid "Value"
+msgstr "القيمة"
+
+#: templates/workouts/records.html:17
+msgid "Achieved"
+msgstr "تاريخ التحقيق"
+
+#: templates/workouts/records.html:18 templates/workouts/session_list.html:15
+msgid "Session"
+msgstr "الجلسة"
+
+#: templates/workouts/records.html:41
+msgid "No personal records yet. Log a set that beats your previous best."
+msgstr "لا توجد أرقام شخصية بعد. سجّل مجموعة تتفوق على أفضل سابق لك."
+
+#: templates/workouts/session_detail.html:10
+msgid "Started %(started)s"
+msgstr "بدأت %(started)s"
+
+#: templates/workouts/session_detail.html:13
+msgid "finished %(ended)s (%(minutes)s min)"
+msgstr "انتهت %(ended)s (%(minutes)s دقيقة)"
+
+#: templates/workouts/session_detail.html:15
+#: templates/workouts/session_list.html:34
+msgid "in progress"
+msgstr "جارية"
+
+#: templates/workouts/session_detail.html:17
+msgid "rating"
+msgstr "تقييم"
+
+#: templates/workouts/session_detail.html:20
+msgid ""
+"Total volume: %(volume)s kg &middot; sets: %(sets)s &middot; average RPE: "
+"%(rpe)s"
+msgstr "الحجم الكلي: %(volume)s كغ &middot; المجموعات: %(sets)s &middot; متوسط الجهد: %(rpe)s"
+
+#: templates/workouts/session_detail.html:51 workouts/models.py:89
+msgid "Personal record"
+msgstr "رقم شخصي"
+
+#: templates/workouts/session_detail.html:54
+msgid "No sets logged."
+msgstr "لا مجموعات مسجّلة."
+
+#: templates/workouts/session_list.html:4
+#: templates/workouts/session_list.html:8
+msgid "Workout history"
+msgstr "سجل التدريب"
+
+#: templates/workouts/session_list.html:14
+msgid "Date"
+msgstr "التاريخ"
+
+#: templates/workouts/session_list.html:16
+msgid "Plan"
+msgstr "الخطة"
+
+#: templates/workouts/session_list.html:20 workouts/models.py:26
+msgid "Rating"
+msgstr "التقييم"
+
+#: templates/workouts/session_list.html:42
+msgid "Continue"
+msgstr "متابعة"
+
+#: templates/workouts/session_list.html:51
+msgid "No sessions recorded yet. Start one from a saved plan."
+msgstr "لا جلسات مسجّلة بعد. ابدأ جلسة من خطة محفوظة."
+
+#: workouts/models.py:22
+msgid "Started at"
+msgstr "وقت البدء"
+
+#: workouts/models.py:23
+msgid "Ended at"
+msgstr "وقت الانتهاء"
+
+#: workouts/models.py:24
+msgid "Duration (minutes)"
+msgstr "المدة (دقائق)"
+
+#: workouts/models.py:30
+msgid "workout session"
+msgstr "جلسة تدريب"
+
+#: workouts/models.py:31
+msgid "workout sessions"
+msgstr "جلسات التدريب"
+
+#: workouts/models.py:68
+msgid "session exercise"
+msgstr "تمرين الجلسة"
+
+#: workouts/models.py:69
+msgid "session exercises"
+msgstr "تمارين الجلسة"
+
+#: workouts/models.py:85
+msgid "Reps completed"
+msgstr "التكرارات المنجزة"
+
+#: workouts/models.py:90
+msgid "Logged at"
+msgstr "وقت التسجيل"
+
+#: workouts/models.py:94
+msgid "logged set"
+msgstr "مجموعة مسجّلة"
+
+#: workouts/models.py:95
+msgid "logged sets"
+msgstr "المجموعات المسجّلة"
+
+#: workouts/models.py:114
+msgid "Max weight"
+msgstr "أقصى وزن"
+
+#: workouts/models.py:115
+msgid "Max reps"
+msgstr "أقصى تكرارات"
+
+#: workouts/models.py:116
+msgid "Max volume"
+msgstr "أقصى حجم"
+
+#: workouts/models.py:117
+msgid "Max duration"
+msgstr "أقصى مدة"
+
+#: workouts/models.py:126
+msgid "Record type"
+msgstr "نوع الرقم"
+
+#: workouts/models.py:137
+msgid "Achieved at"
+msgstr "تاريخ التحقيق"
+
+#: workouts/models.py:144
+msgid "personal record"
+msgstr "رقم شخصي"
+
+#: workouts/models.py:145
+msgid "personal records"
+msgstr "الأرقام الشخصية"
+
+#: workouts/views.py:40
+msgid ""
+"This plan has no exercises yet. Add exercises before starting a session."
+msgstr "هذه الخطة لا تحتوي على تمارين بعد. أضف التمارين قبل بدء الجلسة."
+
+#: workouts/views.py:44
+msgid "Session '%(name)s' started. Good luck!"
+msgstr "بدأت الجلسة '%(name)s'. حظًا موفقًا!"
+
+#: workouts/views.py:98
+msgid "New personal record for %(name)s: %(labels)s."
+msgstr "رقم شخصي جديد لـ %(name)s: %(labels)s."
+
+#: workouts/views.py:100
+msgid "Set logged for %(name)s."
+msgstr "سُجّلت مجموعة لـ %(name)s."
+
+#: workouts/views.py:105
+msgid "Could not log the set: %(errors)s"
+msgstr "تعذّر تسجيل المجموعة: %(errors)s"
+
+#: workouts/views.py:121
+msgid "Session '%(name)s' completed."
+msgstr "اكتملت الجلسة '%(name)s'."
+
+#: workouts/views.py:123
+msgid "Please correct the session details."
+msgstr "يرجى تصحيح بيانات الجلسة."
+

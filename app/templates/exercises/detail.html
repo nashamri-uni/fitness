@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ exercise.name }} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ exercise.display_name }}</h2>
+  <p class="muted">
+    {{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}
+    {% if not exercise.is_active %} &middot; {% trans "inactive" %}{% endif %}
+  </p>
+
+  {% if exercise.description %}<p>{{ exercise.description }}</p>{% endif %}
+
+  <h3>{% trans "Instructions" %}</h3>
+  {% if exercise.instructions %}
+    {{ exercise.instructions|linebreaks }}
+  {% else %}
+    <p class="muted">{% trans "No instructions recorded." %}</p>
+  {% endif %}
+
+  <h3>{% trans "Target muscles" %}</h3>
+  <p>
+    {% for group in exercise.primary_muscles %}<span class="tag">{{ group.display_name }}</span>{% empty %}<span class="muted">{% trans "None" %}</span>{% endfor %}
+    {% for group in exercise.secondary_muscles %}<span class="pill">{{ group.display_name }}</span>{% endfor %}
+  </p>
+
+  <h3>{% trans "Equipment" %}</h3>
+  <p>
+    {% for item in exercise.equipment_list %}<span class="pill">{{ item.display_name }}</span>{% empty %}<span class="muted">{% trans "Bodyweight / none" %}</span>{% endfor %}
+  </p>
+
+  {% if exercise.video_url %}<p><a href="{{ exercise.video_url }}">{% trans "Demonstration video" %}</a></p>{% endif %}
+
+  <div class="form-actions">
+    <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Add to a plan" %}</a>
+    <a class="btn btn-secondary" href="{% url 'exercises:library' %}">{% trans "Back to library" %}</a>
+  </div>
+</div>
+{% endblock %}

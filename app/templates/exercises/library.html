@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Exercise Library" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Exercise Library" %}</h2>
+  <form method="get" class="filters">
+    <div>
+      <label for="q">{% trans "Search" %}</label>
+      <input type="text" id="q" name="q" value="{{ selected.q }}" placeholder="{% trans 'Exercise name' %}">
+    </div>
+    <div>
+      <label for="muscle_group">{% trans "Muscle group" %}</label>
+      <select id="muscle_group" name="muscle_group">
+        <option value="">{% trans "All" %}</option>
+        {% for group in muscle_groups %}
+          <option value="{{ group.pk }}" {% if selected.muscle_group == group.pk|stringformat:"s" %}selected{% endif %}>{{ group.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="equipment">{% trans "Equipment" %}</label>
+      <select id="equipment" name="equipment">
+        <option value="">{% trans "All" %}</option>
+        {% for item in equipment %}
+          <option value="{{ item.pk }}" {% if selected.equipment == item.pk|stringformat:"s" %}selected{% endif %}>{{ item.display_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="difficulty">{% trans "Difficulty" %}</label>
+      <select id="difficulty" name="difficulty">
+        <option value="">{% trans "All" %}</option>
+        {% for value, label in DIFFICULTY_CHOICES %}
+          <option value="{{ value }}" {% if selected.difficulty == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="type">{% trans "Type" %}</label>
+      <select id="type" name="type">
+        <option value="">{% trans "All" %}</option>
+        {% for value, label in TYPE_CHOICES %}
+          <option value="{{ value }}" {% if selected.type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <button type="submit">{% trans "Apply filters" %}</button>
+    </div>
+  </form>
+</div>
+
+{% if page_obj.object_list %}
+  <div class="grid grid-3">
+    {% for exercise in page_obj %}
+      <article class="card">
+        <h3><a href="{% url 'exercises:detail' exercise.pk %}">{{ exercise.display_name }}</a></h3>
+        <p class="muted">{{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}</p>
+        <p>
+          {% for link in exercise.muscle_links.all %}
+            <span class="tag">{{ link.muscle_group.display_name }}</span>
+          {% endfor %}
+        </p>
+        <p class="muted">
+          {% for link in exercise.equipment_links.all %}{{ link.equipment.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+        </p>
+      </article>
+    {% endfor %}
+  </div>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}{% for k, v in selected.items %}{% if k != 'page' %}&amp;{{ k }}={{ v }}{% endif %}{% endfor %}">{% trans "Previous" %}</a>
+    {% endif %}
+    <span class="pill">
+      {% blocktrans with number=page_obj.number total=paginator.num_pages %}Page {{ number }} of {{ total }}{% endblocktrans %}
+    </span>
+    {% if page_obj.has_next %}
+      <a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}{% for k, v in selected.items %}{% if k != 'page' %}&amp;{{ k }}={{ v }}{% endif %}{% endfor %}">{% trans "Next" %}</a>
+    {% endif %}
+  </div>
+{% else %}
+  <p class="empty">{% trans "No exercises match the current filters." %}</p>
+{% endif %}
+{% endblock %}

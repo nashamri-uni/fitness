@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Register" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 560px;">
+  <h2>{% trans "Create an account" %}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <div class="form-actions">
+      <button type="submit">{% trans "Register" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

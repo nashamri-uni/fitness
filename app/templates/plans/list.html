@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "My plans" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "My workout plans" %}</h2>
+  <p><a class="btn" href="{% url 'plans:create' %}">{% trans "Create new plan" %}</a></p>
+
+  {% if plans %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Goal" %}</th>
+            <th>{% trans "Exercises" %}</th>
+            <th>{% trans "Sets" %}</th>
+            <th>{% trans "Est. duration" %}</th>
+            <th>{% trans "Created" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for plan in plans %}
+            <tr>
+              <td><a href="{% url 'plans:detail' plan.pk %}">{{ plan.name }}</a></td>
+              <td>{{ plan.get_goal_display }}</td>
+              <td>{{ plan.exercises.count }}</td>
+              <td>{{ plan.total_sets }}</td>
+              <td>{{ plan.estimated_duration_minutes }} {% trans "min" %}</td>
+              <td>{{ plan.created_at|date:"Y-m-d" }}</td>
+              <td>
+                <form method="post" action="{% url 'workouts:start' plan.pk %}" class="inline-form">
+                  {% csrf_token %}
+                  <button type="submit">{% trans "Start session" %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% trans "You have no plans yet. Create one and add exercises from the library." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

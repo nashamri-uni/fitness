@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Profile" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 620px;">
+  <h2>{% trans "Profile" %}</h2>
+  <p class="muted">
+    {% blocktrans with username=user.username %}Signed in as <strong>{{ username }}</strong>.{% endblocktrans %}
+    {% if user.is_project_admin %}<span class="pill">{% trans "Administrator" %}</span>{% endif %}
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <h3>{% trans "Account" %}</h3>
+    {% include "partials/form_fields.html" with form=user_form %}
+
+    <h3>{% trans "Fitness preferences" %}</h3>
+    {% include "partials/form_fields.html" with form=profile_form %}
+
+    <div class="form-actions">
+      <button type="submit">{% trans "Save changes" %}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

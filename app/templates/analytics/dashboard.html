@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Dashboard" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Analytics dashboard" %}</h2>
+  <div class="grid grid-3">
+    <div class="stat"><div class="label">{% trans "Sessions" %}</div><div class="value">{{ stats.total_sessions }}</div></div>
+    <div class="stat"><div class="label">{% trans "Sessions (12 weeks)" %}</div><div class="value">{{ stats.recent_sessions }}</div></div>
+    <div class="stat"><div class="label">{% trans "Sets logged" %}</div><div class="value">{{ stats.total_sets }}</div></div>
+    <div class="stat"><div class="label">{% trans "Total volume (kg)" %}</div><div class="value">{{ stats.total_volume_kg }}</div></div>
+    <div class="stat"><div class="label">{% trans "Average session" %}</div><div class="value">{{ stats.avg_session_minutes }} {% trans "min" %}</div></div>
+    <div class="stat"><div class="label">{% trans "Average RPE" %}</div><div class="value">{{ stats.avg_rpe }}</div></div>
+    <div class="stat"><div class="label">{% trans "Personal records" %}</div><div class="value">{{ stats.personal_records }}</div></div>
+    <div class="stat"><div class="label">{% trans "Weekly streak" %}</div><div class="value">{{ stats.streak_weeks }}</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>{% trans "Weekly training volume" %}</h3>
+  <canvas id="volume-chart" class="chart" data-data='{{ chart_json }}'
+          data-label="{% trans "Weekly volume (kg)" %}"
+          data-y-title="{% trans "Volume (kg)" %}"
+          data-empty="{% trans "Log at least one completed set to see your progress chart." %}"
+          data-no-chart="{% trans "Chart library is unavailable, but the numbers are shown in the table." %}"
+          height="120"></canvas>
+
+  {% if chart.labels %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Week" %}</th>
+            <th>{% trans "Volume (kg)" %}</th>
+            <th>{% trans "Sets" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in chart.rows %}
+            <tr>
+              <td>{{ row.label }}</td>
+              <td>{{ row.volume }}</td>
+              <td>{{ row.sets }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>{% trans "Improvement per exercise" %}</h3>
+  {% if progress %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Exercise" %}</th>
+            <th>{% trans "First logged" %}</th>
+            <th>{% trans "Current best" %}</th>
+            <th>{% trans "Change" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in progress %}
+            <tr>
+              <td><a href="{% url 'exercises:detail' row.id %}">{{ row.name }}</a></td>
+              <td>{{ row.first|floatformat:1 }} kg</td>
+              <td>{{ row.current|floatformat:1 }} kg</td>
+              <td>{% if row.change_pct > 0 %}+{% endif %}{{ row.change_pct }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% trans "Log a weighted set to start tracking improvement." %}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>{% trans "Recent personal records" %}</h3>
+  {% if records %}
+    <ul>
+      {% for record in records %}
+        <li>
+          {% blocktrans with name=record.exercise.display_name type=record.get_record_type_display value=record.value|floatformat:1 date=record.achieved_at|date:"Y-m-d" %}{{ name }} — {{ type }}: {{ value }} ({{ date }}){% endblocktrans %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">{% trans "No personal records yet." %}</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>{% trans "Recent sessions" %}</h3>
+  {% if recent_sessions %}
+    <ul>
+      {% for session in recent_sessions %}
+        <li>
+          <a href="{% url 'workouts:detail' session.pk %}">{{ session.name }}</a>
+          &mdash;
+          {% blocktrans with date=session.started_at|date:"Y-m-d" minutes=session.duration_minutes %}{{ date }}, {{ minutes }} min{% endblocktrans %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="empty">
+      {% url 'plans:list' as plans_url %}
+      {% blocktrans %}No sessions yet. <a href="{{ plans_url }}">Pick a plan</a> and start training.{% endblocktrans %}
+    </p>
+  {% endif %}
+</div>
+{% endblock %}

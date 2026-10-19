@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ action }} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 640px;">
+  <h2>{{ action }}</h2>
+  <form method="post">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <div class="form-actions">
+      <button type="submit">{% trans "Save" %}</button>
+      <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Cancel" %}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

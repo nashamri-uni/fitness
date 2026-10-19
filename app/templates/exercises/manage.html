@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Manage exercise library" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Exercise library management" %}</h2>
+  {% url 'exercises:create' as create_url %}
+  <p class="muted">
+    {% blocktrans %}Administrator only. <a href="{{ create_url }}">Add a new exercise</a>{% endblocktrans %}
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% trans "Name" %}</th>
+          <th>{% trans "Type" %}</th>
+          <th>{% trans "Difficulty" %}</th>
+          <th>{% trans "Muscle groups" %}</th>
+          <th>{% trans "Equipment" %}</th>
+          <th>{% trans "Active" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for exercise in exercises %}
+          <tr>
+            <td><a href="{% url 'exercises:detail' exercise.pk %}">{{ exercise.display_name }}</a></td>
+            <td>{{ exercise.get_exercise_type_display }}</td>
+            <td>{{ exercise.get_difficulty_display }}</td>
+            <td>{% for link in exercise.muscle_links.all %}{{ link.muscle_group.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            <td>{% for link in exercise.equipment_links.all %}{{ link.equipment.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            {% trans "Yes" as yes %}{% trans "No" as no %}
+            <td>{% if exercise.is_active %}{% trans "yes" %}{% else %}{% trans "no" %}{% endif %}</td>
+            <td>
+              <a class="btn btn-secondary" href="{% url 'exercises:edit' exercise.pk %}">{% trans "Edit" %}</a>
+              <a class="btn btn-danger" href="{% url 'exercises:delete' exercise.pk %}">{% trans "Delete" %}</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

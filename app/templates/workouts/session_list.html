@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Workout history" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Workout history" %}</h2>
+  {% if sessions %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Date" %}</th>
+            <th>{% trans "Session" %}</th>
+            <th>{% trans "Plan" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "Sets" %}</th>
+            <th>{% trans "Volume (kg)" %}</th>
+            <th>{% trans "Rating" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for session in sessions %}
+            <tr>
+              <td>{{ session.started_at|date:"Y-m-d H:i" }}</td>
+              <td><a href="{% url 'workouts:detail' session.pk %}">{{ session.name }}</a></td>
+              <td>{{ session.plan.name|default:"&mdash;" }}</td>
+              <td>
+                {% if session.is_finished %}
+                  {{ session.duration_minutes }} {% trans "min" %}
+                {% else %}
+                  <span class="tag">{% trans "in progress" %}</span>
+                {% endif %}
+              </td>
+              <td>{{ session.total_sets }}</td>
+              <td>{{ session.total_volume|floatformat:1 }}</td>
+              <td>{{ session.rating|default:"&mdash;" }}</td>
+              <td>
+                {% if not session.is_finished %}
+                  <a class="btn" href="{% url 'workouts:active' session.pk %}">{% trans "Continue" %}</a>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% trans "No sessions recorded yet. Start one from a saved plan." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

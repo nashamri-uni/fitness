@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ session.name }} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ session.name }}</h2>
+  <p class="muted">
+    {% blocktrans with started=session.started_at|date:"Y-m-d H:i" %}Started {{ started }}{% endblocktrans %}
+    {% if session.is_finished %}
+      &middot;
+      {% blocktrans with ended=session.ended_at|date:"H:i" minutes=session.duration_minutes %}finished {{ ended }} ({{ minutes }} min){% endblocktrans %}
+    {% else %}
+      &middot; <span class="tag">{% trans "in progress" %}</span>
+    {% endif %}
+    {% if session.rating %} &middot; {% trans "rating" %} {{ session.rating }}/5{% endif %}
+  </p>
+  <p class="muted">
+    {% blocktrans with volume=session.total_volume|floatformat:1 sets=session.total_sets rpe=session.average_rpe|default:"—" %}Total volume: {{ volume }} kg &middot; sets: {{ sets }} &middot; average RPE: {{ rpe }}{% endblocktrans %}
+  </p>
+  {% if session.notes %}<p>{{ session.notes|linebreaks }}</p>{% endif %}
+</div>
+
+{% for entry in session.exercises.all %}
+  <div class="card">
+    <h3>{{ forloop.counter }}. {{ entry.exercise.display_name }}</h3>
+    {% if entry.notes %}<p class="muted">{{ entry.notes }}</p>{% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Set" %}</th>
+            <th>{% trans "Reps" %}</th>
+            <th>{% trans "Weight (kg)" %}</th>
+            <th>{% trans "Volume (kg)" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "RPE" %}</th>
+            <th>{% trans "PR" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for set in entry.sets.all %}
+            <tr>
+              <td>{{ set.set_number }}</td>
+              <td>{{ set.reps_completed }}</td>
+              <td>{{ set.weight_kg }}</td>
+              <td>{{ set.volume|floatformat:1 }}</td>
+              <td>{{ set.duration_seconds }}s</td>
+              <td>{{ set.rpe|default:"&mdash;" }}</td>
+              <td>{% if set.is_personal_record %}<span class="tag tag-pr">{% trans "Personal record" %}</span>{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="muted">{% trans "No sets logged." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Progress" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Exercise progress over time" %}</h2>
+  <canvas id="volume-chart" class="chart" data-data='{{ chart_json }}' height="120"></canvas>
+</div>
+
+<div class="card">
+  <h3>{% trans "Improvement metrics" %}</h3>
+  {% if progress %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Exercise" %}</th>
+            <th>{% trans "First logged (kg)" %}</th>
+            <th>{% trans "Current best (kg)" %}</th>
+            <th>{% trans "Change" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in progress %}
+            <tr>
+              <td><a href="{% url 'exercises:detail' row.id %}">{{ row.name }}</a></td>
+              <td>{{ row.first|floatformat:1 }}</td>
+              <td>{{ row.current|floatformat:1 }}</td>
+              <td>{% if row.change_pct > 0 %}+{% endif %}{{ row.change_pct }}%</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% trans "No progress data yet. Log a few weighted sets first." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

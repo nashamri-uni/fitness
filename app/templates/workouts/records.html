@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Personal records" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% trans "Personal records" %}</h2>
+  {% if records %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Exercise" %}</th>
+            <th>{% trans "Record" %}</th>
+            <th>{% trans "Value" %}</th>
+            <th>{% trans "Achieved" %}</th>
+            <th>{% trans "Session" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in records %}
+            <tr>
+              <td><a href="{% url 'exercises:detail' record.exercise.pk %}">{{ record.exercise.display_name }}</a></td>
+              <td>{{ record.get_record_type_display }}</td>
+              <td>{{ record.value|floatformat:1 }}</td>
+              <td>{{ record.achieved_at|date:"Y-m-d" }}</td>
+              <td>
+                {% if record.session_set %}
+                  <a href="{% url 'workouts:detail' record.session_set.session.pk %}">{{ record.session_set.session.name }}</a>
+                {% else %}
+                  &mdash;
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="empty">{% trans "No personal records yet. Log a set that beats your previous best." %}</p>
+  {% endif %}
+</div>
+{% endblock %}

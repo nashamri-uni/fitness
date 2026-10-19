@@ -1,0 +1,38 @@
+/* Right-to-left adjustments for Arabic (and other RTL languages). */
+[dir="rtl"] {
+  font-family: "Noto Naskh Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+}
+
+[dir="rtl"] th,
+[dir="rtl"] td {
+  text-align: right;
+}
+
+[dir="rtl"] .user-area {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .filters > div,
+[dir="rtl"] .form-actions {
+  direction: rtl;
+}
+
+[dir="rtl"] ol,
+[dir="rtl"] ul {
+  padding-left: 0;
+  padding-right: 1.25rem;
+}
+
+[dir="rtl"] .stat .label,
+[dir="rtl"] .stat .value {
+  text-align: right;
+}
+
+[dir="rtl"] .pagination {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .language-switcher select {
+  width: auto;
+}

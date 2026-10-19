@@ -1,0 +1,80 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_BIDI %}rtl{% else %}ltr{% endif %}">
+{% load static %}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% trans "Workout and Fitness Planner" %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static 'css/rtl.css' %}">{% endif %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'analytics:dashboard' %}">{% trans "FitPlanner" %}</a>
+      <nav class="nav">
+        <a href="{% url 'analytics:dashboard' %}">{% trans "Dashboard" %}</a>
+        <a href="{% url 'exercises:library' %}">{% trans "Exercise Library" %}</a>
+        <a href="{% url 'plans:list' %}">{% trans "My Plans" %}</a>
+        <a href="{% url 'workouts:sessions' %}">{% trans "Sessions" %}</a>
+        <a href="{% url 'workouts:records' %}">{% trans "Records" %}</a>
+        <a href="{% url 'accounts:profile' %}">{% trans "Profile" %}</a>
+        {% if user.is_project_admin or user.is_staff %}
+          <a href="{% url 'exercises:manage' %}">{% trans "Manage" %}</a>
+        {% endif %}
+      </nav>
+
+      <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.path }}">
+        <select name="language" aria-label="{% trans 'Language' %}">
+          {% get_available_languages as LANGUAGES %}
+          {% get_language_info_list for LANGUAGES as languages %}
+          {% for language in languages %}
+            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+              {{ language.name_local }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit">{% trans "Switch" %}</button>
+      </form>
+
+      <div class="user-area">
+        {% if user.is_authenticated %}
+          <span class="user-name">{{ user.username }}</span>
+          <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="btn-link">{% trans "Log out" %}</button>
+          </form>
+        {% else %}
+          <a class="btn-link" href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
+          <a class="btn-link" href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li class="message message-{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">{% trans "Workout and Fitness Planner — Django project" %}</div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Active session" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{% blocktrans with name=session.name %}Active session: {{ name }}{% endblocktrans %}</h2>
+  <p class="muted">
+    {% blocktrans with started=session.started_at|date:"Y-m-d H:i" elapsed=elapsed_minutes %}Started {{ started }} &middot; {{ elapsed }} minutes elapsed{% endblocktrans %}
+    {% if session.plan %}
+      &middot; {% trans "plan" %}: <a href="{% url 'plans:detail' session.plan.pk %}">{{ session.plan.name }}</a>
+    {% endif %}
+  </p>
+  <p class="muted">
+    {% blocktrans with sets=session.total_sets volume=session.total_volume|floatformat:1 %}Sets logged so far: {{ sets }} &middot; volume: {{ volume }} kg{% endblocktrans %}
+  </p>
+</div>
+
+{% for item in entries %}
+  <div class="card">
+    <h3>{{ forloop.counter }}. {{ item.entry.exercise.display_name }}</h3>
+
+    {% if item.planned_sets %}
+      <p class="muted">{% trans "Planned:" %}
+        {% for set in item.planned_sets %}
+          <span class="pill">
+            {% blocktrans with number=set.set_number reps=set.reps weight=set.weight_kg %}set {{ number }}: {{ reps }} reps @ {{ weight }} kg{% endblocktrans %}
+          </span>
+        {% endfor %}
+      </p>
+    {% endif %}
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Set" %}</th>
+            <th>{% trans "Reps" %}</th>
+            <th>{% trans "Weight (kg)" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "RPE" %}</th>
+            <th>{% trans "PR" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for set in item.logged_sets %}
+            <tr>
+              <td>{{ set.set_number }}</td>
+              <td>{{ set.reps_completed }}</td>
+              <td>{{ set.weight_kg }}</td>
+              <td>{{ set.duration_seconds }}s</td>
+              <td>{{ set.rpe|default:"&mdash;" }}</td>
+              <td>{% if set.is_personal_record %}<span class="tag tag-pr">{% trans "PR" %}</span>{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="muted">{% trans "Nothing logged yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <form method="post" action="{% url 'workouts:log_set' item.entry.pk %}">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=item.form %}
+      <div class="form-actions"><button type="submit">{% trans "Log set" %}</button></div>
+    </form>
+  </div>
+{% endfor %}
+
+<div class="card">
+  <h3>{% trans "Finish session" %}</h3>
+  <form method="post" action="{% url 'workouts:complete' session.pk %}">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" with form=complete_form %}
+    <div class="form-actions"><button type="submit">{% trans "Complete session" %}</button></div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ plan.name }} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ plan.name }}</h2>
+  <p class="muted">
+    {% blocktrans with goal=plan.get_goal_display duration=plan.estimated_duration_minutes updated=plan.updated_at|date:"Y-m-d H:i" %}Goal: {{ goal }} &middot; estimated {{ duration }} minutes &middot; updated on {{ updated }}{% endblocktrans %}
+  </p>
+  {% if plan.description %}<p>{{ plan.description }}</p>{% endif %}
+
+  <div class="form-actions">
+    <form method="post" action="{% url 'workouts:start' plan.pk %}" class="inline-form">
+      {% csrf_token %}
+      <button type="submit">{% trans "Start a session from this plan" %}</button>
+    </form>
+    <a class="btn btn-secondary" href="{% url 'plans:edit' plan.pk %}">{% trans "Edit plan" %}</a>
+    <a class="btn btn-danger" href="{% url 'plans:delete' plan.pk %}">{% trans "Delete plan" %}</a>
+  </div>
+</div>
+
+<div class="card">
+  <h3>{% trans "Add exercise to the routine" %}</h3>
+  <form method="post">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" with form=add_form %}
+    <div class="form-actions"><button type="submit">{% trans "Add exercise" %}</button></div>
+  </form>
+</div>
+
+{% for item in entries %}
+  {% with entry=item.entry %}
+  <div class="card">
+    <h3>{{ forloop.counter }}. <a href="{% url 'exercises:detail' entry.exercise.pk %}">{{ entry.exercise.display_name }}</a></h3>
+    <p class="muted">
+      {% blocktrans with rest=entry.rest_seconds %}Rest {{ rest }}s{% endblocktrans %}
+      {% if entry.notes %} &middot; {{ entry.notes }}{% endif %}
+    </p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% trans "Set" %}</th>
+            <th>{% trans "Reps" %}</th>
+            <th>{% trans "Duration" %}</th>
+            <th>{% trans "Target weight" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for set in entry.sets.all %}
+            <tr>
+              <td>{{ set.set_number }}</td>
+              <td>{{ set.reps }}</td>
+              <td>{{ set.duration_seconds }}s</td>
+              <td>{{ set.weight_kg }} kg</td>
+              <td>{{ set.get_set_type_display }}</td>
+              <td>
+                <form method="post" action="{% url 'plans:delete_set' set.pk %}" class="inline-form">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-danger">{% trans "Remove" %}</button>
+                </form>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="muted">{% trans "No sets defined yet." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <form method="post" action="{% url 'plans:add_set' entry.pk %}">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=item.set_form %}
+      <div class="form-actions"><button type="submit">{% trans "Add set" %}</button></div>
+    </form>
+
+    <form method="post" action="{% url 'plans:edit_exercise' entry.pk %}">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" with form=item.exercise_form %}
+      <div class="form-actions">
+        <button type="submit" class="btn-secondary">{% trans "Save exercise settings" %}</button>
+        <button type="submit" class="btn-danger" formaction="{% url 'plans:delete_exercise' entry.pk %}">{% trans "Remove exercise" %}</button>
+      </div>
+    </form>
+  </div>
+  {% endwith %}
+{% empty %}
+  <div class="card"><p class="empty">{% trans "This plan has no exercises yet. Use the form above to add some." %}</p></div>
+{% endfor %}
+{% endblock %}
