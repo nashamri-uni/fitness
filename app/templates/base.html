@@ -27,10 +27,10 @@
         {% endif %}
       </nav>
 
-      <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher">
+      <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher" data-auto-submit>
         {% csrf_token %}
         <input name="next" type="hidden" value="{{ request.path }}">
-        <select name="language" aria-label="{% trans 'Language' %}">
+        <select name="language" aria-label="{% trans 'Language' %}" data-autosubmit>
           {% get_available_languages as LANGUAGES %}
           {% get_language_info_list for LANGUAGES as languages %}
           {% for language in languages %}

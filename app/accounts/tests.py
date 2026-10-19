@@ -1,4 +1,5 @@
 """Tests for registration, login and profile (FREQ-1, FREQ-2, FREQ-13)."""
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
@@ -105,3 +106,24 @@ class LanguageTests(TestCase):
         self.assertIn('dir="rtl"', html)
         self.assertIn("الملف الشخصي", html)
         self.assertIn("css/rtl.css", html)
+
+    def test_language_dropdown_is_an_auto_submit_form(self):
+        """Issue #1: the dropdown applies the language itself, no Switch click."""
+        user = User.objects.create_user(username="amina", email="amina@example.com", password="pw12345678")
+        self.client.login(username="amina", password="pw12345678")
+
+        html = self.client.get(reverse("accounts:profile")).content.decode()
+        self.assertIn('class="inline-form language-switcher" data-auto-submit', html)
+        self.assertIn('name="language"', html)
+
+        app_js = (settings.BASE_DIR / "static" / "js" / "app.js").read_text(encoding="utf-8")
+        self.assertIn("setupLanguageSwitcher", app_js)
+
+    def test_switching_keeps_the_user_on_the_current_page(self):
+        user = User.objects.create_user(username="reem", email="reem@example.com", password="pw12345678")
+        self.client.login(username="reem", password="pw12345678")
+        current_page = reverse("exercises:library")
+
+        response = self.client.post(reverse("set_language"), {"language": "ar", "next": current_page})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], current_page)

@@ -95,6 +95,9 @@ button:hover, .btn:hover { background: var(--accent-dark); }
 .btn-danger { background: var(--danger); border-color: var(--danger); }
 .btn-link { background: none; border: none; color: inherit; padding: 0; cursor: pointer; text-decoration: underline; }
 .inline-form { display: inline; }
+.language-switcher select { min-width: 9rem; }
+/* The submit button is only a fallback: with JS the dropdown applies the language itself. */
+.language-switcher.js-auto-submit button { display: none; }
 .form-actions { margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 .errorlist { color: var(--danger); margin: 0 0 .75rem; padding: 0; list-style: none; }
 

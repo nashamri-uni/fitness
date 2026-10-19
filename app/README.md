@@ -79,6 +79,9 @@ and language switching (including Arabic data names).
 - `LocaleMiddleware` + `LANGUAGES = [("en", "English"), ("ar", "العربية")]` in `config/settings.py`.
 - A language switcher in `templates/base.html` posts to Django's built-in
   `set_language` view (`/i18n/setlang/`); the choice is stored in the session.
+  The dropdown submits itself when the selection changes (`static/js/app.js`), so the
+  language is applied immediately and the user stays on the current page; the Switch
+  button remains only as a no-JavaScript fallback.
 - `<html lang="..." dir="...">` is set from `{% get_current_language %}` and
   `{% get_current_language_bidi %}`, and `static/css/rtl.css` is loaded only for RTL
   languages (mirrored layout, right-aligned text, RTL Chart.js axes).

@@ -1,5 +1,25 @@
+// Applies the chosen language as soon as the dropdown changes (issue #1),
+// so no extra "Switch" click is needed. The button stays as a no-JS fallback.
+function setupLanguageSwitcher() {
+  document.querySelectorAll("form[data-auto-submit]").forEach((form) => {
+    const select = form.querySelector("select");
+    if (!select) return;
+
+    form.classList.add("js-auto-submit");
+    select.addEventListener("change", () => {
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+    });
+  });
+}
+
 // Progress charts for the analytics dashboard (FREQ-12).
 document.addEventListener("DOMContentLoaded", () => {
+  setupLanguageSwitcher();
+
   const canvas = document.getElementById("volume-chart");
   if (!canvas) return;
 
