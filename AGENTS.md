@@ -28,7 +28,7 @@ app/           the Django implementation
 ├── templates/ base.html + per-app templates + templates/partials/form_fields.html
 ├── static/    css/style.css, css/rtl.css, js/app.js
 └── locale/ar/ django.po / django.mo translations
-shell.nix      dev shell (python3 + django + gettext + git)
+README.md      root quick start: what the app does + how to run it with uv (Windows / macOS / Linux)
 ```
 
 ## Domain model (as defined in Chapter 3 of the report)
@@ -67,24 +67,25 @@ Business rules that must keep working:
   Data names are *not* UI text: `MuscleGroup`/`Equipment`/`Exercise` carry `Name_Ar` +
   `display_name()` (see `exercises/models.py:NameMixin`). Chart labels are passed to JS through
   `data-*` attributes rendered with `{% trans %}`. After editing any string:
-  `python manage.py makemessages -l ar && python manage.py compilemessages` (needs gettext).
+  `python manage.py makemessages -l ar && python manage.py compilemessages` (needs GNU gettext).
 - **Tests:** each app has `tests.py`; keep them green, and add coverage for new endpoints/logic
   (ownership, filtering, PR detection, language switching).
 
 ## Running
 
 ```bash
-nix-shell                                   # or any env with Django + gettext
-cd app && python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
+# uv is the only prerequisite (it also provides Python 3.12+); see the root README.md
+uv venv .venv --python 3.12 && uv pip install -r requirements.txt
 
-python manage.py migrate
-python manage.py seed_data                  # exercise library (muscle groups, equipment, exercises)
-python manage.py seed_demo                  # optional demo user, demo/demo12345678
-python manage.py createsuperuser
-python manage.py runserver                  # http://127.0.0.1:8000/
-python manage.py test
+uv run python manage.py migrate
+uv run python manage.py seed_data                   # exercise library (muscle groups, equipment, exercises)
+uv run python manage.py seed_demo                   # optional demo user, demo/demo12345678
+uv run python manage.py createsuperuser
+uv run python manage.py runserver                   # http://127.0.0.1:8000/
+uv run python manage.py test
 ```
+
+(`python manage.py …` works the same way once the virtual environment is activated.)
 
 ## Requirement → route map
 
@@ -102,6 +103,15 @@ python manage.py test
 ## Development workflow
 
 Git + GitHub, branch per feature/fix, pull request review before merging to `main`, GitHub Issues for
-the backlog (Chapter 3). `DEBUG = True` and the committed secret key are development defaults — use
+the backlog (Chapter 3).
+
+**Never run any Git write operation on your own initiative — no `git commit`, `git push`, branch
+creation, merge, rebase, tag, `gh pr create`, `gh issue close`, or any other write command — unless
+the user explicitly asks for it.** Make the file changes, leave them unstaged in the working tree,
+and report which files changed (and what the commit message could be) so the user can stage,
+commit, push and open PRs themselves. Read-only Git commands (`status`, `diff`, `log`, `show`) are
+fine.
+
+`DEBUG = True` and the committed secret key are development defaults — use
 environment values for anything deployable. Out of scope for now: nutrition tracking, social features,
 real-time coaching, wearable integration; reserved for later work by NREQ-11.
