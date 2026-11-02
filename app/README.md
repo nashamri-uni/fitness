@@ -3,19 +3,22 @@
 Web application implementation of the graduation project described in `../report`.
 Built with Django (MVT), SQLite, plain HTML/CSS/JavaScript and Chart.js.
 
+> Install-and-run instructions for Windows, macOS and Linux (using [uv](https://docs.astral.sh/uv/))
+> are in the repository root `README.md`. This file documents the implementation details.
+
 ## Running it
 
 ```bash
 cd app
-uv venv .venv && source .venv/bin/activate      # or: python -m venv .venv
-pip install -r requirements.txt
+uv venv .venv --python 3.12
+uv pip install -r requirements.txt
 
-python manage.py migrate
-python manage.py seed_data        # exercise library (muscle groups, equipment, 33 exercises)
-python manage.py seed_demo        # optional demo user with 10 weeks of logged sessions
-python manage.py createsuperuser
+uv run python manage.py migrate
+uv run python manage.py seed_data     # exercise library (muscle groups, equipment, 33 exercises)
+uv run python manage.py seed_demo     # optional demo user with logged sessions (demo / demo12345678)
+uv run python manage.py createsuperuser
 
-python manage.py runserver
+uv run python manage.py runserver
 ```
 
 Then open http://127.0.0.1:8000/ and log in.
@@ -99,11 +102,9 @@ and language switching (including Arabic data names).
 Translations live in `locale/ar/LC_MESSAGES/django.po`. After changing any string:
 
 ```bash
-python manage.py makemessages -l ar   # needs the gettext package
+python manage.py makemessages -l ar   # needs the GNU gettext package
 python manage.py compilemessages      # builds locale/ar/LC_MESSAGES/django.mo
 ```
-
-`shell.nix` already includes `gettext`, so both commands work inside the dev shell.
 
 ## Notes
 
