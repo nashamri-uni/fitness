@@ -130,3 +130,95 @@ button:hover, .btn:hover { background: var(--accent-dark); }
   .stat .value { font-size: 1.3rem; }
   th, td { padding: .4rem; font-size: .9rem; }
 }
+
+
+/* Dark Mode */
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+
+    --bg: #0f172a;
+    --card: #1e293b;
+    --ink: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --ok: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+    --border: #334155;
+}
+
+/* Dark Mode Toggle Button */
+
+.theme-toggle {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* Forms */
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+    background: #0f172a;
+    color: var(--ink);
+    border-color: var(--border);
+}
+
+/* Tables */
+
+html[data-theme="dark"] th {
+    background: #273449;
+    color: var(--ink);
+}
+
+/* Secondary Buttons */
+
+html[data-theme="dark"] .btn-secondary {
+    background: #334155;
+    color: var(--ink);
+    border-color: #475569;
+}
+
+/* Tags and Pills */
+
+html[data-theme="dark"] .tag,
+html[data-theme="dark"] .pill {
+    background: #334155;
+    color: var(--ink);
+}
+
+html[data-theme="dark"] .tag-pr {
+    background: #064e3b;
+    color: #d1fae5;
+}
+
+/* Notification Messages */
+
+html[data-theme="dark"] .message-success {
+    background: #052e16;
+    border-color: #166534;
+    color: #bbf7d0;
+}
+
+html[data-theme="dark"] .message-error {
+    background: #450a0a;
+    border-color: #991b1b;
+    color: #fecaca;
+}
+
+html[data-theme="dark"] .message-info,
+html[data-theme="dark"] .message-warning {
+    background: #422006;
+    border-color: #92400e;
+    color: #fde68a;
+}
