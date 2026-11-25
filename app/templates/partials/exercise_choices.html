@@ -1,0 +1,16 @@
+<div class="exercise-options">
+  {% for exercise in exercises %}
+    <div class="exercise-option">
+      <input
+        type="radio"
+        id="id_exercise_{{ exercise.pk }}"
+        name="{{ add_form.exercise.html_name }}"
+        value="{{ exercise.pk }}"
+        {% if selected_exercise_id == exercise.pk|stringformat:"s" %}checked{% endif %}
+        {% if add_form.exercise.errors %}aria-invalid="true" aria-describedby="exercise-errors"{% endif %}
+        required
+      >
+      <label for="id_exercise_{{ exercise.pk }}">{{ exercise.display_name }}</label>
+    </div>
+  {% endfor %}
+</div>
