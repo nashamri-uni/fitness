@@ -67,3 +67,45 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 });
+
+
+
+/* Dark Mode Toggle */
+
+(() => {
+    const themeButton = document.getElementById("theme-toggle");
+    const root = document.documentElement;
+
+    if (!themeButton) return;
+
+    const savedTheme = localStorage.getItem("fitness-theme");
+
+    function applyTheme(theme) {
+        const isDark = theme === "dark";
+
+        if (isDark) {
+            root.setAttribute("data-theme", "dark");
+        } else {
+            root.removeAttribute("data-theme");
+        }
+
+        themeButton.textContent = isDark ? "☀️" : "🌙";
+
+        themeButton.setAttribute(
+            "aria-label",
+            isDark ? "Switch to light mode" : "Switch to dark mode"
+        );
+
+        themeButton.setAttribute("aria-pressed", String(isDark));
+    }
+
+    applyTheme(savedTheme === "dark" ? "dark" : "light");
+
+    themeButton.addEventListener("click", () => {
+        const currentTheme = root.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        applyTheme(newTheme);
+        localStorage.setItem("fitness-theme", newTheme);
+    });
+})();
