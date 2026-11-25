@@ -1,9 +1,16 @@
 """Tests for the exercise library (FREQ-3, FREQ-14, FREQ-15)."""
+from io import StringIO
+
+from django.core.management import call_command
 from django.test import TestCase
+from django.utils import timezone
 from django.urls import reverse
 
 from accounts.models import User
+from plans.models import PlanExercise, WorkoutPlan
+from workouts.models import SessionExercise, WorkoutSession
 
+from .management.commands.seed_data import EQUIPMENT, EXERCISES, MUSCLE_GROUPS
 from .models import Equipment, Exercise, ExerciseEquipment, ExerciseMuscleGroup, MuscleGroup
 
 
@@ -135,3 +142,135 @@ class LibraryTests(TestCase):
         response = self.client.get(reverse("exercises:library"))
         self.assertContains(response, "Barbell Bench Press")
         self.assertContains(response, "Chest")
+
+
+class SeedDataTests(TestCase):
+    def run_seed(self):
+        call_command("seed_data", stdout=StringIO())
+
+    def test_seed_catalogue_is_complete_idempotent_and_correctly_linked(self):
+        self.run_seed()
+
+        self.assertEqual(len(EXERCISES), 100)
+        self.assertEqual(Exercise.objects.count(), 100)
+        self.assertEqual(Exercise.objects.values("name").distinct().count(), 100)
+        self.assertEqual(
+            dict(Exercise.objects.values_list("name", "name_ar")),
+            {name: name_ar for name, name_ar, *_ in EXERCISES},
+        )
+        self.assertEqual(
+            dict(MuscleGroup.objects.values_list("name", "name_ar")),
+            {name: name_ar for name, _, name_ar in MUSCLE_GROUPS},
+        )
+        self.assertEqual(
+            dict(Equipment.objects.values_list("name", "name_ar")),
+            {name: name_ar for name, name_ar in EQUIPMENT},
+        )
+        self.assertEqual(
+            Exercise.objects.get(name="Flat Dumbbell Bench Press").name_ar,
+            "بنش مستوٍ بالدمبل",
+        )
+        self.assertEqual(
+            list(
+                Exercise.objects.get(name="Flat Dumbbell Bench Press")
+                .muscle_links.filter(role=ExerciseMuscleGroup.Role.PRIMARY)
+                .values_list("muscle_group__name", flat=True)
+            ),
+            ["Chest"],
+        )
+        self.assertEqual(
+            list(
+                Exercise.objects.get(name="Treadmill Run")
+                .equipment_links.values_list("equipment__name", flat=True)
+            ),
+            ["Treadmill"],
+        )
+        self.assertEqual(
+            list(
+                Exercise.objects.get(name="Hip Adduction Machine")
+                .muscle_links.filter(role=ExerciseMuscleGroup.Role.PRIMARY)
+                .values_list("muscle_group__name", flat=True)
+            ),
+            ["Adductors"],
+        )
+        self.assertEqual(MuscleGroup.objects.get(name="Shoulders").name_ar, "الأكتاف")
+
+        exercise_id = Exercise.objects.get(name="Flat Dumbbell Bench Press").pk
+        muscle_link_count = ExerciseMuscleGroup.objects.count()
+        equipment_link_count = ExerciseEquipment.objects.count()
+        self.run_seed()
+
+        self.assertEqual(Exercise.objects.count(), 100)
+        self.assertEqual(Exercise.objects.get(name="Flat Dumbbell Bench Press").pk, exercise_id)
+        self.assertEqual(ExerciseMuscleGroup.objects.count(), muscle_link_count)
+        self.assertEqual(ExerciseEquipment.objects.count(), equipment_link_count)
+
+    def test_seed_updates_known_seed_rows_without_breaking_plan_or_session_history(self):
+        owner = User.objects.create_user(username="seedowner", password="pw12345678")
+        chest = MuscleGroup.objects.create(name="Chest", body_region="upper", name_ar="الصدر")
+        back = MuscleGroup.objects.create(name="Back", body_region="upper", name_ar="الظهر")
+        shoulders = MuscleGroup.objects.create(name="Shoulders", body_region="upper", name_ar="الكتف")
+        exercise = Exercise.objects.create(
+            name="Barbell Bench Press",
+            name_ar="ضغط البار على المقعد",
+            description="Barbell Bench Press (strength, intermediate).",
+            instructions="Old seed instructions.",
+            exercise_type="strength",
+            difficulty="intermediate",
+        )
+        ExerciseMuscleGroup.objects.create(
+            exercise=exercise, muscle_group=back, role=ExerciseMuscleGroup.Role.PRIMARY
+        )
+        plan = WorkoutPlan.objects.create(user=owner, name="Historic plan")
+        plan_entry = PlanExercise.objects.create(plan=plan, exercise=exercise, order=1)
+        session = WorkoutSession.objects.create(
+            user=owner,
+            plan=plan,
+            name="Historic session",
+            started_at=timezone.now(),
+        )
+        session_entry = SessionExercise.objects.create(session=session, exercise=exercise, order=1)
+        exercise_id = exercise.pk
+        shoulders_id = shoulders.pk
+
+        self.run_seed()
+
+        exercise.refresh_from_db()
+        self.assertEqual(exercise.pk, exercise_id)
+        self.assertEqual(exercise.name_ar, "بنش برس بالبار")
+        self.assertEqual(plan_entry.exercise_id, exercise_id)
+        self.assertEqual(session_entry.exercise_id, exercise_id)
+        self.assertTrue(WorkoutSession.objects.filter(pk=session.pk, plan=plan).exists())
+        self.assertEqual(
+            list(
+                exercise.muscle_links.filter(role=ExerciseMuscleGroup.Role.PRIMARY)
+                .values_list("muscle_group__name", flat=True)
+            ),
+            ["Chest"],
+        )
+        self.assertEqual(MuscleGroup.objects.get(pk=shoulders_id).name_ar, "الأكتاف")
+
+    def test_seed_does_not_overwrite_a_user_created_exercise_with_a_catalogue_name(self):
+        admin = User.objects.create_user(username="exerciseadmin", password="pw12345678")
+        custom = Exercise.objects.create(
+            name="Flat Dumbbell Bench Press",
+            name_ar="اسمي الخاص",
+            description="User-authored description.",
+            instructions="User-authored instructions.",
+            exercise_type="balance",
+            difficulty="advanced",
+            created_by=admin,
+        )
+        custom_id = custom.pk
+
+        self.run_seed()
+
+        custom.refresh_from_db()
+        self.assertEqual(custom.pk, custom_id)
+        self.assertEqual(custom.name_ar, "اسمي الخاص")
+        self.assertEqual(custom.description, "User-authored description.")
+        self.assertEqual(custom.instructions, "User-authored instructions.")
+        self.assertEqual(custom.exercise_type, "balance")
+        self.assertEqual(custom.difficulty, "advanced")
+        self.assertFalse(custom.muscle_links.exists())
+        self.assertFalse(custom.equipment_links.exists())
