@@ -85,7 +85,7 @@ uv pip install -r requirements.txt
 
 # 4. Create the database and fill the exercise library
 uv run python manage.py migrate
-uv run python manage.py seed_data     # 11 muscle groups, 10 equipment items, 33 exercises
+uv run python manage.py seed_data     # 12 muscle groups, 22 equipment items, 100 exercises
 
 # 5. Optional: demo user with several weeks of logged sessions
 uv run python manage.py seed_demo     # login: demo / demo12345678
@@ -206,7 +206,7 @@ Database tables and columns mirror the schema in Chapter 3 of the design report 
 uv run python manage.py test
 ```
 
-38 tests cover registration/authentication, library filtering and ownership, plan and set editing,
+45 tests cover registration/authentication, library filtering and ownership, plan and set editing,
 live session logging, personal-record detection, improvement metrics and streaks, the dashboard and
 progress pages, and language switching (including Arabic data names).
 
