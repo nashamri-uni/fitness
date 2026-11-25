@@ -25,8 +25,57 @@
   <h3>{% trans "Add exercise to the routine" %}</h3>
   <form method="post">
     {% csrf_token %}
-    {% include "partials/form_fields.html" with form=add_form %}
-    <div class="form-actions"><button type="submit">{% trans "Add exercise" %}</button></div>
+    {% if add_form.non_field_errors %}
+      <ul class="errorlist">
+        {% for error in add_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+
+    <fieldset class="exercise-browser" aria-labelledby="exercise-field-label">
+      <legend id="exercise-field-label">{{ add_form.exercise.label }}</legend>
+      {% if add_form.exercise.errors %}
+        <ul class="errorlist" id="exercise-errors">
+          {% for error in add_form.exercise.errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      {% endif %}
+      {% for category in exercise_categories %}
+        <details class="exercise-category">
+          <summary>
+            <span>{{ category.name }}</span>
+            <span class="exercise-category-count">{{ category.exercise_count }}</span>
+          </summary>
+          <div class="exercise-category-content">
+            {% if category.exercises %}
+              {% include "partials/exercise_choices.html" with exercises=category.exercises %}
+            {% endif %}
+            {% for group in category.groups %}
+              <details class="exercise-subcategory">
+                <summary>{{ group.name }}</summary>
+                {% include "partials/exercise_choices.html" with exercises=group.exercises %}
+              </details>
+            {% endfor %}
+          </div>
+        </details>
+      {% empty %}
+        <p class="empty">{% trans "No exercises are available to add." %}</p>
+      {% endfor %}
+    </fieldset>
+
+    {% for field in add_form %}
+      {% if field.name != "exercise" %}
+        <p>
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}
+            <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+          {% endif %}
+        </p>
+      {% endif %}
+    {% endfor %}
+
+    <div class="form-actions">
+      <button type="submit" {% if not exercise_categories %}disabled{% endif %}>{% trans "Add exercise" %}</button>
+    </div>
   </form>
 </div>
 

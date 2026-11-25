@@ -1070,6 +1070,18 @@ msgid ""
 "This plan has no exercises yet. Add exercises before starting a session."
 msgstr "هذه الخطة لا تحتوي على تمارين بعد. أضف التمارين قبل بدء الجلسة."
 
+#: plans/views.py
+msgid "Free Exercises"
+msgstr "تمارين حرة"
+
+#: plans/views.py
+msgid "Other exercises"
+msgstr "تمارين أخرى"
+
+#: templates/plans/detail.html
+msgid "No exercises are available to add."
+msgstr "لا توجد تمارين متاحة للإضافة."
+
 #: workouts/views.py:44
 msgid "Session '%(name)s' started. Good luck!"
 msgstr "بدأت الجلسة '%(name)s'. حظًا موفقًا!"

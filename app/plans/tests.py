@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
-from exercises.models import Exercise
+from exercises.models import Exercise, ExerciseMuscleGroup, MuscleGroup
 
 from .models import PlanExercise, PlanSet, WorkoutPlan
 
@@ -31,12 +31,96 @@ class PlanTests(TestCase):
         plan = self.create_plan()
         response = self.client.post(
             reverse("plans:detail", args=[plan.pk]),
-            {"exercise": self.exercise.pk, "order": 1, "rest_seconds": 120},
+            {"exercise": self.exercise.pk, "order": 3, "rest_seconds": 120},
         )
         self.assertRedirects(response, reverse("plans:detail", args=[plan.pk]))
         entry = PlanExercise.objects.get(plan=plan)
         self.assertEqual(entry.exercise, self.exercise)
+        self.assertEqual(entry.order, 3)
         self.assertEqual(entry.rest_seconds, 120)
+
+    def test_exercise_browser_groups_by_primary_muscle_and_cardio_type(self):
+        plan = self.create_plan()
+        chest = MuscleGroup.objects.create(name="Chest", body_region="upper")
+        core = MuscleGroup.objects.create(name="Core", body_region="core")
+        legs = MuscleGroup.objects.create(name="Quadriceps", body_region="lower")
+        ExerciseMuscleGroup.objects.create(exercise=self.exercise, muscle_group=chest, role="primary")
+        ExerciseMuscleGroup.objects.create(exercise=self.exercise, muscle_group=core, role="secondary")
+
+        cardio = Exercise.objects.create(name="Treadmill", exercise_type="cardio")
+        ExerciseMuscleGroup.objects.create(exercise=cardio, muscle_group=legs, role="primary")
+        lower_exercise = Exercise.objects.create(name="Squat")
+        ExerciseMuscleGroup.objects.create(exercise=lower_exercise, muscle_group=legs, role="primary")
+        core_primary = Exercise.objects.create(name="Plank")
+        ExerciseMuscleGroup.objects.create(exercise=core_primary, muscle_group=core, role="primary")
+        unlinked = Exercise.objects.create(name="Unmapped Exercise")
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+        categories = {
+            str(category["name"]): category
+            for category in response.context["exercise_categories"]
+        }
+
+        self.assertEqual(
+            [exercise.name for exercise in categories["Upper body"]["groups"][0]["exercises"]],
+            ["Push-up"],
+        )
+        self.assertEqual(categories["Upper body"]["groups"][0]["name"], "Chest")
+        self.assertNotIn("Core", categories)
+        self.assertEqual(
+            [exercise.name for exercise in categories["Lower body"]["groups"][0]["exercises"]],
+            ["Squat"],
+        )
+        self.assertEqual([exercise.name for exercise in categories["Cardio"]["exercises"]], ["Treadmill"])
+        self.assertEqual(categories["Cardio"]["groups"], [])
+        other = categories["Free Exercises"]
+        self.assertEqual(
+            [exercise.name for exercise in other["exercises"]],
+            ["Plank", "Unmapped Exercise"],
+        )
+        self.assertEqual(other["groups"], [])
+        self.assertContains(response, 'id="id_exercise_%s"' % core_primary.pk)
+        self.assertContains(response, 'id="id_exercise_%s"' % unlinked.pk)
+
+    def test_already_added_exercise_is_not_offered_again(self):
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise, order=4, rest_seconds=45)
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+
+        self.assertNotContains(response, 'id="id_exercise_%s"' % self.exercise.pk)
+        self.assertContains(response, "No exercises are available to add.")
+        self.assertContains(response, "name=\"order\"")
+        self.assertContains(response, "name=\"rest_seconds\"")
+        self.assertContains(response, "disabled")
+
+    def test_invalid_duplicate_submission_keeps_form_validation(self):
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+
+        response = self.client.post(
+            reverse("plans:detail", args=[plan.pk]),
+            {"exercise": self.exercise.pk, "order": 2, "rest_seconds": 30},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PlanExercise.objects.filter(plan=plan).count(), 1)
+        self.assertContains(response, "Select a valid choice")
+
+    def test_exercise_browser_renders_arabic_category_and_muscle_names(self):
+        plan = self.create_plan()
+        chest = MuscleGroup.objects.create(name="Chest", name_ar="الصدر", body_region="upper")
+        self.exercise.name_ar = "تمرين الضغط"
+        self.exercise.save()
+        ExerciseMuscleGroup.objects.create(exercise=self.exercise, muscle_group=chest, role="primary")
+
+        self.client.post(reverse("set_language"), {"language": "ar", "next": "/"})
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+
+        self.assertContains(response, "الجزء العلوي")
+        self.assertContains(response, "الصدر")
+        self.assertContains(response, "تمرين الضغط")
+        self.assertContains(response, 'dir="rtl"')
 
     def test_add_set_to_plan_exercise(self):
         plan = self.create_plan()
