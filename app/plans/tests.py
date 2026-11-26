@@ -4,6 +4,7 @@ from django.urls import reverse
 
 from accounts.models import User
 from exercises.models import Exercise, ExerciseMuscleGroup, MuscleGroup
+from exercises.management.commands.seed_data import EXERCISE_IMAGES
 
 from .models import PlanExercise, PlanSet, WorkoutPlan
 
@@ -13,7 +14,12 @@ class PlanTests(TestCase):
         self.user = User.objects.create_user(username="planowner", email="p@example.com", password="pw12345678")
         self.other = User.objects.create_user(username="other", email="o@example.com", password="pw12345678")
         self.client.login(username="planowner", password="pw12345678")
-        self.exercise = Exercise.objects.create(name="Push-up", exercise_type="strength", difficulty="beginner")
+        self.exercise = Exercise.objects.create(
+            name="Push-up",
+            exercise_type="strength",
+            difficulty="beginner",
+            image=EXERCISE_IMAGES["Push-up"],
+        )
 
     def create_plan(self):
         return WorkoutPlan.objects.create(user=self.user, name="Push Day", goal="hypertrophy")
@@ -81,6 +87,18 @@ class PlanTests(TestCase):
         self.assertEqual(other["groups"], [])
         self.assertContains(response, 'id="id_exercise_%s"' % core_primary.pk)
         self.assertContains(response, 'id="id_exercise_%s"' % unlinked.pk)
+        self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
+        self.assertContains(response, 'class="exercise-thumbnail exercise-thumbnail--picker"')
+
+    def test_selected_plan_exercise_uses_a_static_thumbnail(self):
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise, order=1)
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+
+        self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
+        self.assertContains(response, 'class="exercise-thumbnail exercise-thumbnail--selected"')
+        self.assertNotContains(response, f'src="{self.exercise.local_image_url}"')
 
     def test_already_added_exercise_is_not_offered_again(self):
         plan = self.create_plan()
@@ -120,6 +138,9 @@ class PlanTests(TestCase):
         self.assertContains(response, "الجزء العلوي")
         self.assertContains(response, "الصدر")
         self.assertContains(response, "تمرين الضغط")
+        self.assertContains(response, "<legend id=\"exercise-field-label\">التمرين</legend>")
+        self.assertContains(response, '<label for="id_order">الترتيب</label>')
+        self.assertContains(response, '<label for="id_rest_seconds">ثوانٍ الراحة</label>')
         self.assertContains(response, 'dir="rtl"')
 
     def test_add_set_to_plan_exercise(self):

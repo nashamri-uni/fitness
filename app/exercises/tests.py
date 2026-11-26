@@ -77,14 +77,18 @@ class LibraryTests(TestCase):
 
         self.assertTrue(exercise.local_image_url)
         self.assertTrue(exercise.local_image_url.startswith("/"))
+        self.assertTrue(exercise.local_image_url.endswith(".gif"))
+        self.assertTrue(exercise.local_thumbnail_url.endswith(".webp"))
         detail_response = self.client.get(reverse("exercises:detail", args=[exercise.pk]))
         library_response = self.client.get(reverse("exercises:library"), {"q": exercise.name})
         self.assertContains(detail_response, f'src="{exercise.local_image_url}"')
-        self.assertContains(library_response, f'src="{exercise.local_image_url}"')
+        self.assertContains(library_response, f'src="{exercise.local_thumbnail_url}"')
+        self.assertNotContains(library_response, f'src="{exercise.local_image_url}"')
 
         exercise.image = "https://example.invalid/exercise.gif"
         exercise.save(update_fields=["image"])
         self.assertEqual(exercise.local_image_url, "")
+        self.assertEqual(exercise.local_thumbnail_url, "")
         external_response = self.client.get(reverse("exercises:detail", args=[exercise.pk]))
         self.assertNotContains(external_response, "https://example.invalid")
         self.assertNotContains(external_response, "<img")
@@ -191,10 +195,18 @@ class SeedDataTests(TestCase):
             EXERCISE_IMAGES,
         )
         self.assertTrue(
-            all(Exercise.objects.get(name=name).local_image_url for name in EXERCISE_IMAGES)
+            all(
+                Exercise.objects.get(name=name).local_image_url
+                and Exercise.objects.get(name=name).local_thumbnail_url
+                for name in EXERCISE_IMAGES
+            )
         )
         self.assertFalse(
-            [exercise.name for exercise in Exercise.objects.filter(is_active=True) if not exercise.local_image_url]
+            [
+                exercise.name
+                for exercise in Exercise.objects.filter(is_active=True)
+                if not exercise.local_image_url or not exercise.local_thumbnail_url
+            ]
         )
         self.assertIn("Dead Bug", EXERCISE_IMAGES)
         self.assertEqual(

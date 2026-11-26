@@ -19,7 +19,14 @@
 
 {% for item in entries %}
   <div class="card">
-    <h3>{{ forloop.counter }}. {{ item.entry.exercise.display_name }}</h3>
+    <div class="exercise-entry-heading">
+      {% if item.entry.exercise.local_thumbnail_url and item.entry.exercise.local_image_url %}
+        <a class="exercise-animation-link" href="{% url 'exercises:detail' item.entry.exercise.pk %}">
+          <img class="exercise-thumbnail exercise-thumbnail--selected" src="{{ item.entry.exercise.local_thumbnail_url }}" alt="{{ item.entry.exercise.display_name }}" width="320" height="320" loading="lazy" decoding="async">
+        </a>
+      {% endif %}
+      <h3>{{ forloop.counter }}. {{ item.entry.exercise.display_name }}</h3>
+    </div>
 
     {% if item.planned_sets %}
       <p class="muted">{% trans "Planned:" %}

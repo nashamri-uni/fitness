@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from accounts.models import User
 from exercises.models import Exercise
+from exercises.management.commands.seed_data import EXERCISE_IMAGES
 from plans.models import PlanExercise, PlanSet, WorkoutPlan
 
 from .models import PersonalRecord, SessionExercise, SessionSet, WorkoutSession
@@ -111,4 +112,15 @@ class SessionTests(TestCase):
         finish_session(session)
         self.assertEqual(self.client.get(reverse("workouts:sessions")).status_code, 200)
         self.assertEqual(self.client.get(reverse("workouts:detail", args=[session.pk])).status_code, 200)
+
+    def test_active_session_uses_clickable_static_thumbnail(self):
+        self.exercise.image = EXERCISE_IMAGES["Incline Dumbbell Press"]
+        self.exercise.save(update_fields=["image"])
+        session = start_session(self.user, self.plan)
+
+        response = self.client.get(reverse("workouts:active", args=[session.pk]))
+
+        self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
+        self.assertContains(response, f'href="{reverse("exercises:detail", args=[self.exercise.pk])}"')
+        self.assertNotContains(response, f'src="{self.exercise.local_image_url}"')
         self.assertEqual(self.client.get(reverse("workouts:records")).status_code, 200)

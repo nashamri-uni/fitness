@@ -10,7 +10,12 @@
         {% if add_form.exercise.errors %}aria-invalid="true" aria-describedby="exercise-errors"{% endif %}
         required
       >
-      <label for="id_exercise_{{ exercise.pk }}">{{ exercise.display_name }}</label>
+      <label for="id_exercise_{{ exercise.pk }}">
+        {% if exercise.local_thumbnail_url %}
+          <img class="exercise-thumbnail exercise-thumbnail--picker" src="{{ exercise.local_thumbnail_url }}" alt="" width="320" height="320" loading="lazy" decoding="async">
+        {% endif %}
+        <span>{{ exercise.display_name }}</span>
+      </label>
     </div>
   {% endfor %}
 </div>

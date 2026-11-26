@@ -54,20 +54,20 @@
 </div>
 
 {% if page_obj.object_list %}
-  <div class="grid grid-3">
+  <div class="grid exercise-library-grid">
     {% for exercise in page_obj %}
-      <article class="card">
-        {% if exercise.local_image_url %}
-          <img class="exercise-image" src="{{ exercise.local_image_url }}" alt="{{ exercise.display_name }}" loading="lazy">
+      <article class="card exercise-card">
+        {% if exercise.local_thumbnail_url %}
+          <img class="exercise-thumbnail exercise-thumbnail--card" src="{{ exercise.local_thumbnail_url }}" alt="{{ exercise.display_name }}" width="320" height="320" loading="lazy" decoding="async">
         {% endif %}
         <h3><a href="{% url 'exercises:detail' exercise.pk %}">{{ exercise.display_name }}</a></h3>
-        <p class="muted">{{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}</p>
-        <p>
+        <p class="muted exercise-card-type">{{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}</p>
+        <p class="exercise-card-muscles">
           {% for link in exercise.muscle_links.all %}
             <span class="tag">{{ link.muscle_group.display_name }}</span>
           {% endfor %}
         </p>
-        <p class="muted">
+        <p class="muted exercise-card-equipment">
           {% for link in exercise.equipment_links.all %}{{ link.equipment.display_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
         </p>
       </article>

@@ -82,7 +82,12 @@
 {% for item in entries %}
   {% with entry=item.entry %}
   <div class="card">
-    <h3>{{ forloop.counter }}. <a href="{% url 'exercises:detail' entry.exercise.pk %}">{{ entry.exercise.display_name }}</a></h3>
+    <div class="exercise-entry-heading">
+      {% if entry.exercise.local_thumbnail_url %}
+        <img class="exercise-thumbnail exercise-thumbnail--selected" src="{{ entry.exercise.local_thumbnail_url }}" alt="" width="320" height="320" loading="lazy" decoding="async">
+      {% endif %}
+      <h3>{{ forloop.counter }}. <a href="{% url 'exercises:detail' entry.exercise.pk %}">{{ entry.exercise.display_name }}</a></h3>
+    </div>
     <p class="muted">
       {% blocktrans with rest=entry.rest_seconds %}Rest {{ rest }}s{% endblocktrans %}
       {% if entry.notes %} &middot; {{ entry.notes }}{% endif %}

@@ -1,5 +1,6 @@
 """Forms for building and editing workout plans (FREQ-4 to FREQ-7)."""
 from django import forms
+from django.utils.translation import gettext_lazy as _
 
 from exercises.models import Exercise
 
@@ -15,9 +16,17 @@ class WorkoutPlanForm(forms.ModelForm):
 class AddExerciseForm(forms.Form):
     """UC-9: select an exercise from the library to add to the routine."""
 
-    exercise = forms.ModelChoiceField(queryset=Exercise.objects.filter(is_active=True))
-    order = forms.IntegerField(required=False, min_value=1)
-    rest_seconds = forms.IntegerField(required=False, min_value=0, initial=90)
+    exercise = forms.ModelChoiceField(
+        queryset=Exercise.objects.filter(is_active=True),
+        label=_("Exercise"),
+    )
+    order = forms.IntegerField(required=False, min_value=1, label=_("Order"))
+    rest_seconds = forms.IntegerField(
+        required=False,
+        min_value=0,
+        initial=90,
+        label=_("Rest seconds"),
+    )
 
     def __init__(self, *args, plan=None, **kwargs):
         super().__init__(*args, **kwargs)

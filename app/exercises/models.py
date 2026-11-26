@@ -132,9 +132,9 @@ class Exercise(NameMixin):
     def equipment_list(self):
         return [link.equipment for link in self.equipment_links.all()]
 
-    @property
-    def local_image_url(self):
-        image = self.image.strip()
+    @staticmethod
+    def _local_static_url(image):
+        image = image.strip()
         path = PurePosixPath(image)
         if (
             not image
@@ -149,6 +149,18 @@ class Exercise(NameMixin):
         if "://" in url:
             return ""
         return f"/{url.lstrip('/')}"
+
+    @property
+    def local_image_url(self):
+        return self._local_static_url(self.image)
+
+    @property
+    def local_thumbnail_url(self):
+        image = self.image.strip()
+        if not image:
+            return ""
+        thumbnail = PurePosixPath(image).with_suffix(".webp").as_posix()
+        return self._local_static_url(thumbnail)
 
     def __str__(self):
         return self.display_name()
