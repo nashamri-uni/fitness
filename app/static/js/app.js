@@ -16,6 +16,31 @@ function setupLanguageSwitcher() {
   });
 }
 
+function getChartTheme() {
+  const styles = getComputedStyle(document.documentElement);
+  return {
+    accent: styles.getPropertyValue("--accent").trim(),
+    ink: styles.getPropertyValue("--ink").trim(),
+    muted: styles.getPropertyValue("--muted").trim(),
+    border: styles.getPropertyValue("--border").trim(),
+  };
+}
+
+function applyChartTheme(chart) {
+  const theme = getChartTheme();
+  chart.data.datasets.forEach((dataset) => {
+    dataset.backgroundColor = theme.accent;
+  });
+  chart.options.color = theme.ink;
+  chart.options.plugins.legend.labels.color = theme.ink;
+  chart.options.scales.x.ticks.color = theme.muted;
+  chart.options.scales.x.grid.color = theme.border;
+  chart.options.scales.y.ticks.color = theme.muted;
+  chart.options.scales.y.grid.color = theme.border;
+  chart.options.scales.y.title.color = theme.ink;
+  chart.update("none");
+}
+
 // Progress charts for the analytics dashboard (FREQ-12).
 document.addEventListener("DOMContentLoaded", () => {
   setupLanguageSwitcher();
@@ -47,25 +72,42 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  new Chart(canvas, {
+  const chartTheme = getChartTheme();
+  const chart = new Chart(canvas, {
     type: "bar",
     data: {
       labels: data.labels,
       datasets: [
-        { label: canvas.dataset.label || "Weekly volume (kg)", data: data.volume, backgroundColor: "#2563eb" },
+        {
+          label: canvas.dataset.label || "Weekly volume (kg)",
+          data: data.volume,
+          backgroundColor: chartTheme.accent,
+        },
       ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: true } },
+      color: chartTheme.ink,
+      plugins: { legend: { display: true, labels: { color: chartTheme.ink } } },
       scales: {
+        x: {
+          ticks: { color: chartTheme.muted },
+          grid: { color: chartTheme.border },
+        },
         y: {
           beginAtZero: true,
-          title: { display: true, text: canvas.dataset.yTitle || "Volume (kg)" },
+          ticks: { color: chartTheme.muted },
+          grid: { color: chartTheme.border },
+          title: {
+            display: true,
+            text: canvas.dataset.yTitle || "Volume (kg)",
+            color: chartTheme.ink,
+          },
         },
       },
     },
   });
+  document.addEventListener("fitness-theme-change", () => applyChartTheme(chart));
 });
 
 
@@ -97,6 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
         );
 
         themeButton.setAttribute("aria-pressed", String(isDark));
+        document.dispatchEvent(new Event("fitness-theme-change"));
     }
 
     applyTheme(savedTheme === "dark" ? "dark" : "light");

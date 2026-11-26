@@ -71,6 +71,17 @@ Business rules that must keep working:
 - **Tests:** each app has `tests.py`; keep them green, and add coverage for new endpoints/logic
   (ownership, filtering, PR detection, language switching).
 
+## UI theme and styling
+
+- Every new UI component must support both Light Mode and Dark Mode.
+- Reuse the existing CSS theme variables (`--bg`, `--card`, `--ink`, `--muted`, `--border`, and
+  other established tokens) for theme-dependent colors.
+- Avoid hardcoded colors for theme-dependent backgrounds, text, borders, and controls; add or adjust
+  theme variables only when an existing token cannot represent the needed style.
+- Test new UI components in both themes and verify text contrast, buttons, forms, tables, and
+  responsive layouts.
+- Check layouts in both Arabic (RTL) and English (LTR), and follow the existing CSS conventions.
+
 ## Running
 
 ```bash
