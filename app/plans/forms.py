@@ -1,10 +1,31 @@
 """Forms for building and editing workout plans (FREQ-4 to FREQ-7)."""
 from django import forms
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from exercises.models import Exercise
 
 from .models import PlanExercise, PlanSet, WorkoutPlan
+
+
+CARDIO_CONDITIONING_EXERCISES = (
+    "Push-up",
+    "Plank",
+    "Burpee",
+    "Jumping Jack",
+    "Mountain Climber",
+    "High Knees Lift Run",
+)
+
+
+def available_exercises_for_plan(plan):
+    exercises = Exercise.objects.filter(is_active=True)
+    if plan is not None and plan.goal == WorkoutPlan.Goal.CARDIO:
+        exercises = exercises.filter(
+            Q(exercise_type=Exercise.ExerciseType.CARDIO)
+            | Q(name__in=CARDIO_CONDITIONING_EXERCISES)
+        )
+    return exercises
 
 
 class WorkoutPlanForm(forms.ModelForm):
@@ -31,11 +52,11 @@ class AddExerciseForm(forms.Form):
     def __init__(self, *args, plan=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.plan = plan
+        exercises = available_exercises_for_plan(plan)
         if plan is not None:
             existing = [entry.exercise_id for entry in plan.exercises.all()]
-            self.fields["exercise"].queryset = Exercise.objects.filter(is_active=True).exclude(
-                pk__in=existing
-            )
+            exercises = exercises.exclude(pk__in=existing)
+        self.fields["exercise"].queryset = exercises
 
 
 class PlanExerciseForm(forms.ModelForm):

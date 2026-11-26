@@ -3,8 +3,9 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import User
-from exercises.models import Exercise, ExerciseMuscleGroup, MuscleGroup
 from exercises.management.commands.seed_data import EXERCISE_IMAGES
+from exercises.models import Exercise, ExerciseMuscleGroup, MuscleGroup
+from .forms import AddExerciseForm
 
 from .models import PlanExercise, PlanSet, WorkoutPlan
 
@@ -44,6 +45,88 @@ class PlanTests(TestCase):
         self.assertEqual(entry.exercise, self.exercise)
         self.assertEqual(entry.order, 3)
         self.assertEqual(entry.rest_seconds, 120)
+
+    def test_cardio_plan_shows_cardio_machines_and_conditioning_only(self):
+        plan = WorkoutPlan.objects.create(user=self.user, name="Cardio Day", goal=WorkoutPlan.Goal.CARDIO)
+        cardio_names = (
+            "Treadmill",
+            "Elliptical Machine",
+            "Stationary Bike",
+            "Rowing Machine",
+            "Burpee",
+            "Jumping Jack",
+            "Mountain Climber",
+            "High Knees Lift Run",
+        )
+        for name in cardio_names:
+            Exercise.objects.create(name=name, exercise_type=Exercise.ExerciseType.CARDIO)
+        plank = Exercise.objects.create(name="Plank")
+        resistance_exercises = [
+            Exercise.objects.create(name=name)
+            for name in ("Bench Press", "Biceps Curl", "Leg Press")
+        ]
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+        categories = response.context["exercise_categories"]
+        visible_names = {
+            exercise.name
+            for category in categories
+            for exercise in category["exercises"]
+        }
+        visible_names.update(
+            exercise.name
+            for category in categories
+            for group in category["groups"]
+            for exercise in group["exercises"]
+        )
+
+        self.assertEqual(visible_names, {"Push-up", plank.name, *cardio_names})
+        self.assertTrue(all(category["exercise_count"] > 0 for category in categories))
+        cardio_category = next(category for category in categories if category["key"] == "cardio")
+        self.assertEqual(
+            {exercise.name for exercise in cardio_category["exercises"]},
+            set(cardio_names),
+        )
+        free_category = next(category for category in categories if category["key"] == "other")
+        self.assertEqual(
+            {exercise.name for exercise in free_category["exercises"]},
+            {"Push-up", "Plank"},
+        )
+        self.assertEqual(plank.exercise_type, Exercise.ExerciseType.STRENGTH)
+        self.assertEqual(
+            set(AddExerciseForm(plan=plan).fields["exercise"].queryset.values_list("name", flat=True)),
+            visible_names,
+        )
+        for exercise in resistance_exercises:
+            self.assertNotContains(response, f'value="{exercise.pk}"')
+
+    def test_cardio_plan_rejects_resistance_exercise_submission(self):
+        plan = WorkoutPlan.objects.create(user=self.user, name="Cardio Day", goal=WorkoutPlan.Goal.CARDIO)
+        bench_press = Exercise.objects.create(name="Bench Press")
+
+        response = self.client.post(
+            reverse("plans:detail", args=[plan.pk]),
+            {"exercise": bench_press.pk, "order": 1, "rest_seconds": 90},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(PlanExercise.objects.filter(plan=plan, exercise=bench_press).exists())
+        self.assertContains(response, "Select a valid choice")
+
+    def test_non_cardio_goals_keep_all_active_exercises(self):
+        Exercise.objects.create(name="Bench Press")
+        Exercise.objects.create(name="Treadmill", exercise_type=Exercise.ExerciseType.CARDIO)
+        expected = set(Exercise.objects.filter(is_active=True).values_list("name", flat=True))
+
+        for goal, _label in WorkoutPlan.Goal.choices:
+            if goal == WorkoutPlan.Goal.CARDIO:
+                continue
+            with self.subTest(goal=goal):
+                plan = WorkoutPlan.objects.create(user=self.user, name=f"{goal} Plan", goal=goal)
+                available = set(
+                    AddExerciseForm(plan=plan).fields["exercise"].queryset.values_list("name", flat=True)
+                )
+                self.assertEqual(available, expected)
 
     def test_exercise_browser_groups_by_primary_muscle_and_cardio_type(self):
         plan = self.create_plan()
