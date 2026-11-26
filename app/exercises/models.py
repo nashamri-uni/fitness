@@ -1,5 +1,9 @@
+from pathlib import PurePosixPath
+
 from django.conf import settings
+from django.contrib.staticfiles import finders
 from django.db import models
+from django.templatetags.static import static
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import get_language
 
@@ -127,6 +131,24 @@ class Exercise(NameMixin):
 
     def equipment_list(self):
         return [link.equipment for link in self.equipment_links.all()]
+
+    @property
+    def local_image_url(self):
+        image = self.image.strip()
+        path = PurePosixPath(image)
+        if (
+            not image
+            or path.is_absolute()
+            or ".." in path.parts
+            or "\\" in image
+            or "://" in image
+            or not finders.find(image)
+        ):
+            return ""
+        url = static(image)
+        if "://" in url:
+            return ""
+        return f"/{url.lstrip('/')}"
 
     def __str__(self):
         return self.display_name()

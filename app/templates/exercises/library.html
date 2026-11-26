@@ -57,6 +57,9 @@
   <div class="grid grid-3">
     {% for exercise in page_obj %}
       <article class="card">
+        {% if exercise.local_image_url %}
+          <img class="exercise-image" src="{{ exercise.local_image_url }}" alt="{{ exercise.display_name }}" loading="lazy">
+        {% endif %}
         <h3><a href="{% url 'exercises:detail' exercise.pk %}">{{ exercise.display_name }}</a></h3>
         <p class="muted">{{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}</p>
         <p>

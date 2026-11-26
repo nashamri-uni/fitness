@@ -85,7 +85,7 @@ uv pip install -r requirements.txt
 
 # 4. Create the database and fill the exercise library
 uv run python manage.py migrate
-uv run python manage.py seed_data     # 12 muscle groups, 22 equipment items, 100 exercises
+uv run python manage.py seed_data     # 12 muscle groups, 24 equipment items, 128 catalog entries (111 active)
 
 # 5. Optional: demo user with several weeks of logged sessions
 uv run python manage.py seed_demo     # login: demo / demo12345678
@@ -97,6 +97,9 @@ uv run python manage.py createsuperuser
 # 7. Run it
 uv run python manage.py runserver
 ```
+
+The optional root `exercise_dataset/` folder is ignored by Git. The seed command
+uses only the selected, rights-cleared local exercise images under `app/static/exercises/`.
 
 Open <http://127.0.0.1:8000/> — register an account or log in with the demo user.
 The Django admin is at <http://127.0.0.1:8000/admin/>.

@@ -10,7 +10,13 @@ from accounts.models import User
 from plans.models import PlanExercise, WorkoutPlan
 from workouts.models import SessionExercise, WorkoutSession
 
-from .management.commands.seed_data import EQUIPMENT, EXERCISES, MUSCLE_GROUPS
+from .management.commands.seed_data import (
+    EQUIPMENT,
+    EXERCISES,
+    EXERCISE_IMAGES,
+    MUSCLE_GROUPS,
+    RETIRED_EXERCISES,
+)
 from .models import Equipment, Exercise, ExerciseEquipment, ExerciseMuscleGroup, MuscleGroup
 
 
@@ -61,6 +67,27 @@ class LibraryTests(TestCase):
         response = self.client.get(reverse("exercises:detail", args=[self.bench_press.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Barbell Bench Press")
+
+    def test_library_and_detail_render_only_existing_local_images(self):
+        image_path = EXERCISE_IMAGES["Incline Dumbbell Press"]
+        exercise = Exercise.objects.create(
+            name="Incline Dumbbell Press",
+            image=image_path,
+        )
+
+        self.assertTrue(exercise.local_image_url)
+        self.assertTrue(exercise.local_image_url.startswith("/"))
+        detail_response = self.client.get(reverse("exercises:detail", args=[exercise.pk]))
+        library_response = self.client.get(reverse("exercises:library"), {"q": exercise.name})
+        self.assertContains(detail_response, f'src="{exercise.local_image_url}"')
+        self.assertContains(library_response, f'src="{exercise.local_image_url}"')
+
+        exercise.image = "https://example.invalid/exercise.gif"
+        exercise.save(update_fields=["image"])
+        self.assertEqual(exercise.local_image_url, "")
+        external_response = self.client.get(reverse("exercises:detail", args=[exercise.pk]))
+        self.assertNotContains(external_response, "https://example.invalid")
+        self.assertNotContains(external_response, "<img")
 
     def test_admin_only_management(self):
         response = self.client.get(reverse("exercises:manage"))
@@ -151,9 +178,25 @@ class SeedDataTests(TestCase):
     def test_seed_catalogue_is_complete_idempotent_and_correctly_linked(self):
         self.run_seed()
 
-        self.assertEqual(len(EXERCISES), 100)
-        self.assertEqual(Exercise.objects.count(), 100)
-        self.assertEqual(Exercise.objects.values("name").distinct().count(), 100)
+        self.assertEqual(len(EXERCISES), 128)
+        self.assertEqual(Exercise.objects.count(), 128)
+        self.assertEqual(Exercise.objects.values("name").distinct().count(), 128)
+        self.assertEqual(Exercise.objects.filter(is_active=True).count(), 111)
+        self.assertEqual(
+            set(Exercise.objects.filter(is_active=False).values_list("name", flat=True)),
+            RETIRED_EXERCISES,
+        )
+        self.assertEqual(
+            dict(Exercise.objects.filter(name__in=EXERCISE_IMAGES).values_list("name", "image")),
+            EXERCISE_IMAGES,
+        )
+        self.assertTrue(
+            all(Exercise.objects.get(name=name).local_image_url for name in EXERCISE_IMAGES)
+        )
+        self.assertFalse(
+            [exercise.name for exercise in Exercise.objects.filter(is_active=True) if not exercise.local_image_url]
+        )
+        self.assertIn("Dead Bug", EXERCISE_IMAGES)
         self.assertEqual(
             dict(Exercise.objects.values_list("name", "name_ar")),
             {name: name_ar for name, name_ar, *_ in EXERCISES},
@@ -193,6 +236,60 @@ class SeedDataTests(TestCase):
             ),
             ["Adductors"],
         )
+        self.assertEqual(
+            Exercise.objects.get(name="Battle Rope").exercise_type,
+            Exercise.ExerciseType.CARDIO,
+        )
+        self.assertEqual(
+            Exercise.objects.get(name="Jumping Jack").exercise_type,
+            Exercise.ExerciseType.CARDIO,
+        )
+        self.assertEqual(
+            Exercise.objects.get(name="High Knees Lift Run").exercise_type,
+            Exercise.ExerciseType.CARDIO,
+        )
+        self.assertEqual(
+            Exercise.objects.get(name="Incline Treadmill Run").exercise_type,
+            Exercise.ExerciseType.CARDIO,
+        )
+        self.assertEqual(
+            Exercise.objects.get(name="Bicycle Crunch").exercise_type,
+            Exercise.ExerciseType.STRENGTH,
+        )
+        self.assertEqual(
+            {
+                exercise_type: Exercise.objects.filter(
+                    is_active=True,
+                    exercise_type=exercise_type,
+                ).count()
+                for exercise_type in Exercise.ExerciseType.values
+            },
+            {"strength": 96, "cardio": 14, "flexibility": 1, "balance": 0},
+        )
+        self.assertEqual(
+            {
+                group.name: ExerciseMuscleGroup.objects.filter(
+                    exercise__is_active=True,
+                    muscle_group=group,
+                    role=ExerciseMuscleGroup.Role.PRIMARY,
+                ).count()
+                for group in MuscleGroup.objects.all()
+            },
+            {
+                "Adductors": 1,
+                "Back": 15,
+                "Biceps": 9,
+                "Calves": 5,
+                "Chest": 11,
+                "Core": 14,
+                "Forearms": 1,
+                "Glutes": 7,
+                "Hamstrings": 7,
+                "Quadriceps": 21,
+                "Shoulders": 13,
+                "Triceps": 7,
+            },
+        )
         self.assertEqual(MuscleGroup.objects.get(name="Shoulders").name_ar, "الأكتاف")
 
         exercise_id = Exercise.objects.get(name="Flat Dumbbell Bench Press").pk
@@ -200,10 +297,34 @@ class SeedDataTests(TestCase):
         equipment_link_count = ExerciseEquipment.objects.count()
         self.run_seed()
 
-        self.assertEqual(Exercise.objects.count(), 100)
+        self.assertEqual(Exercise.objects.count(), 128)
+        self.assertEqual(Exercise.objects.filter(is_active=True).count(), 111)
         self.assertEqual(Exercise.objects.get(name="Flat Dumbbell Bench Press").pk, exercise_id)
         self.assertEqual(ExerciseMuscleGroup.objects.count(), muscle_link_count)
         self.assertEqual(ExerciseEquipment.objects.count(), equipment_link_count)
+
+    def test_seed_soft_retires_niche_exercises_without_deleting_history(self):
+        self.run_seed()
+        exercise = Exercise.objects.get(name="Turkish Get-Up")
+        exercise_id = exercise.pk
+        owner = User.objects.create_user(username="retiredowner", password="pw12345678")
+        plan = WorkoutPlan.objects.create(user=owner, name="Historic plan")
+        plan_entry = PlanExercise.objects.create(plan=plan, exercise=exercise, order=1)
+        session = WorkoutSession.objects.create(
+            user=owner,
+            plan=plan,
+            name="Historic session",
+            started_at=timezone.now(),
+        )
+        session_entry = SessionExercise.objects.create(session=session, exercise=exercise, order=1)
+
+        self.run_seed()
+
+        exercise.refresh_from_db()
+        self.assertEqual(exercise.pk, exercise_id)
+        self.assertFalse(exercise.is_active)
+        self.assertEqual(plan_entry.exercise_id, exercise_id)
+        self.assertEqual(session_entry.exercise_id, exercise_id)
 
     def test_seed_updates_known_seed_rows_without_breaking_plan_or_session_history(self):
         owner = User.objects.create_user(username="seedowner", password="pw12345678")
@@ -253,13 +374,14 @@ class SeedDataTests(TestCase):
     def test_seed_does_not_overwrite_a_user_created_exercise_with_a_catalogue_name(self):
         admin = User.objects.create_user(username="exerciseadmin", password="pw12345678")
         custom = Exercise.objects.create(
-            name="Flat Dumbbell Bench Press",
+            name="Incline Dumbbell Press",
             name_ar="اسمي الخاص",
             description="User-authored description.",
             instructions="User-authored instructions.",
             exercise_type="balance",
             difficulty="advanced",
             created_by=admin,
+            image="custom/exercise.gif",
         )
         custom_id = custom.pk
 
@@ -267,6 +389,7 @@ class SeedDataTests(TestCase):
 
         custom.refresh_from_db()
         self.assertEqual(custom.pk, custom_id)
+        self.assertEqual(custom.image, "custom/exercise.gif")
         self.assertEqual(custom.name_ar, "اسمي الخاص")
         self.assertEqual(custom.description, "User-authored description.")
         self.assertEqual(custom.instructions, "User-authored instructions.")

@@ -6,6 +6,9 @@
 {% block content %}
 <div class="card">
   <h2>{{ exercise.display_name }}</h2>
+  {% if exercise.local_image_url %}
+    <img class="exercise-image" src="{{ exercise.local_image_url }}" alt="{{ exercise.display_name }}">
+  {% endif %}
   <p class="muted">
     {{ exercise.get_exercise_type_display }} &middot; {{ exercise.get_difficulty_display }}
     {% if not exercise.is_active %} &middot; {% trans "inactive" %}{% endif %}
