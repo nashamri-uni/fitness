@@ -66,7 +66,10 @@ def _build_exercise_categories(exercises):
 def plan_list(request):
     """UC-14: view saved workout plans."""
     plans = WorkoutPlan.objects.filter(user=request.user)
-    return render(request, "plans/list.html", {"plans": plans})
+    search_query = request.GET.get("q", "").strip()
+    if search_query:
+        plans = plans.filter(name__icontains=search_query)
+    return render(request, "plans/list.html", {"plans": plans, "search_query": search_query})
 
 
 @login_required

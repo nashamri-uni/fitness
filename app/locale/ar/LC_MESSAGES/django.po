@@ -834,6 +834,18 @@ msgstr "خططي"
 msgid "My workout plans"
 msgstr "خطط التدريب الخاصة بي"
 
+#: templates/plans/list.html
+msgid "Plan name"
+msgstr "اسم الخطة"
+
+#: templates/plans/list.html
+msgid "Clear search"
+msgstr "مسح البحث"
+
+#: templates/plans/list.html
+msgid "No workout plans match your search."
+msgstr "لا توجد خطط تدريب تطابق بحثك."
+
 #: templates/plans/list.html:9
 msgid "Create new plan"
 msgstr "إنشاء خطة جديدة"
