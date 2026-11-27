@@ -20,18 +20,30 @@
       <span aria-hidden="true">←</span> <span>{% trans "Programs" %}</span>
     </a>
     <div class="builder-program-heading">
-      <span class="builder-program-mark" aria-hidden="true">✦</span>
+      <span class="builder-program-mark">{% include "partials/dumbbell_icon.html" %}</span>
       <div>
         <p class="product-eyebrow">{% trans "WORKOUT PROGRAM" %}</p>
         <h1 id="builder-program-title">{{ builder_data.program.name }}</h1>
+        <span class="program-goal-label" id="builder-program-goal-label">{% if program.goal %}{{ program.get_goal_display }}{% else %}{% trans "Goals by workout day" %}{% endif %}</span>
       </div>
       <button id="builder-edit-program-title" type="button" class="builder-title-edit" aria-label="{% trans 'Edit program name' %}" title="{% trans 'Edit program name' %}">✎</button>
       <details class="builder-popover builder-program-settings" id="builder-program-settings">
         <summary aria-label="{% trans 'Program settings' %}" title="{% trans 'Program settings' %}">···</summary>
-        <div class="builder-popover-content">
+        <form class="builder-popover-content" novalidate>
           <label for="builder-program-name">{% trans "Program name" %}</label>
           <input id="builder-program-name" type="text" maxlength="120" value="{{ builder_data.program.name }}" required>
-        </div>
+          <label for="builder-program-goal">{% trans "Training goal" %}</label>
+          <select id="builder-program-goal">
+            {% if not program.goal %}<option value="">{% trans "Goals by workout day" %}</option>{% endif %}
+            {% for value, label in builder_data.goals.items %}<option value="{{ value }}"{% if value == program.goal %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+          <p class="builder-editor-error" role="alert" hidden></p>
+          <div class="builder-editor-actions">
+            <button type="button" class="btn-secondary" data-editor-cancel>{% trans "Cancel" %}</button>
+            <button type="submit">{% trans "Apply" %}</button>
+          </div>
+          <small class="muted">{% trans "Use Save program to keep applied changes." %}</small>
+        </form>
       </details>
     </div>
     <div class="builder-header-actions">
@@ -63,17 +75,22 @@
     </button>
     <details class="builder-popover builder-day-settings" id="builder-day-settings">
       <summary aria-label="{% trans 'Day settings' %}" title="{% trans 'Day settings' %}">⚙</summary>
-      <div class="builder-popover-content builder-day-settings-content">
+      <form class="builder-popover-content builder-day-settings-content" novalidate>
         <label for="builder-day-name">{% trans "Day name" %}</label>
         <input id="builder-day-name" type="text" maxlength="120" required>
         <label for="builder-day-duration">{% trans "Estimated minutes" %}</label>
-        <input id="builder-day-duration" type="number" min="1" max="2147483647" required>
+        <input id="builder-day-duration" type="text" inputmode="numeric" required>
         <label for="builder-day-description">{% trans "Description" %}</label>
         <textarea id="builder-day-description" rows="2" maxlength="4000"></textarea>
+        <p class="builder-editor-error" role="alert" hidden></p>
+        <div class="builder-editor-actions">
+          <button type="button" class="btn-secondary" data-editor-cancel>{% trans "Cancel" %}</button>
+          <button type="submit">{% trans "Apply" %}</button>
+        </div>
         <button id="builder-remove-day" type="button" class="builder-delete-day">
           <span aria-hidden="true">⌫</span> {% trans "Delete day" %}
         </button>
-      </div>
+      </form>
     </details>
   </div>
 
@@ -180,6 +197,20 @@
   </dialog>
 
   <div id="builder-labels" hidden
+    data-available-zero="{% blocktrans count available=0 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-available-one="{% blocktrans count available=1 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-available-two="{% blocktrans count available=2 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-available-few="{% blocktrans count available=3 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-available-many="{% blocktrans count available=11 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-available-other="{% blocktrans count available=100 %}{{ available }} exercise available{% plural %}{{ available }} exercises available{% endblocktrans %}"
+    data-mixed-goals="{% trans 'Goals by workout day' %}"
+    data-conditioning="{% trans 'Conditioning' %}"
+    data-cardio-only="{% trans 'Cardio only' %}"
+    data-editor-pending="{% trans 'Apply or cancel the changes in this editor first.' %}"
+    data-invalid-name="{% trans 'Enter a name of 120 characters or fewer.' %}"
+    data-invalid-duration="{% trans 'Enter an estimated duration in whole minutes, starting at 1.' %}"
+    data-cardio-conflicts="{% trans 'Remove these exercises from their workout days before switching to Cardio.' %}"
+    data-invalid-values="{% trans 'Check the numbers and planned sets before saving.' %}"
     data-saved="{% trans 'All changes saved' %}"
     data-unsaved="{% trans 'Unsaved changes' %}"
     data-saving="{% trans 'Saving…' %}"
@@ -208,8 +239,7 @@
     data-confirm-leave="{% trans 'You have unsaved program changes. Leave this page?' %}"
     data-no-results="{% trans 'No exercises match your search.' %}"
     data-select-exercises="{% trans 'Select at least one exercise.' %}"
-    data-exercise-count-one="{% trans 'exercise' %}"
-    data-exercise-count-many="{% trans 'exercises' %}"
+    data-exercise-count="{% trans 'Exercises' %}"
     data-sets-lower="{% trans 'sets' %}"
     data-warmup="{% trans 'Warm-up' %}"
     data-drop-set="{% trans 'Drop set' %}"
@@ -218,7 +248,7 @@
     data-set-type="{% trans 'Set type' %}"
     data-day-prefix="{% trans 'Day' %}"
     data-add-interval="{% trans 'Add interval' %}"
-    data-selected="{% trans 'selected' %}"
+    data-selected="{% trans 'Selected exercises' %}"
     data-all-categories="{% trans 'All exercises' %}"
     data-mixed="{% trans 'Mixed' %}"
     data-values-vary="{% trans 'Values differ between sets. Enter a value to apply it to all sets.' %}"

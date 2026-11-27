@@ -5,7 +5,8 @@ from .models import PlanExercise, PlanSet, WorkoutPlan, WorkoutProgram
 
 @admin.register(WorkoutProgram)
 class WorkoutProgramAdmin(admin.ModelAdmin):
-    list_display = ("name", "user", "updated_at")
+    list_display = ("name", "user", "goal", "updated_at")
+    readonly_fields = ("goal",)
     search_fields = ("name", "user__username")
 
 

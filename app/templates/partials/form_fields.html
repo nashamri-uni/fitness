@@ -4,11 +4,15 @@
   </ul>
 {% endif %}
 {% for field in form %}
-  <p>
+  {% if field.is_hidden %}
+    {{ field }}
+  {% else %}
+  <div class="form-field">
     <label for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}
     {% if field.errors %}
       <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
     {% endif %}
-  </p>
+  </div>
+  {% endif %}
 {% endfor %}

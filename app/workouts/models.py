@@ -62,6 +62,7 @@ class SessionExercise(models.Model):
     )
     order = models.PositiveIntegerField(default=1, db_column="Order", verbose_name=_("Order"))
     notes = models.CharField(max_length=255, blank=True, db_column="Notes", verbose_name=_("Notes"))
+    targets = models.JSONField(null=True, blank=True, db_column="Targets", verbose_name=_("Workout targets"))
 
     class Meta:
         ordering = ["order", "id"]
