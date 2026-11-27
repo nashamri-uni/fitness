@@ -54,10 +54,18 @@
   const exerciseById = new Map(
     [...source.exercises, ...source.retired_exercises].map((exercise) => [exercise.id, exercise]),
   );
+  const programGoal = document.getElementById("builder-program-goal");
+  const goalLabel = document.getElementById("builder-program-goal-label");
+  const cardioIds = new Set(source.cardio_ids);
+  const catalogIds = source.exercises.map((exercise) => exercise.id);
+  const allowedIds = (goal) => goal === "cardio" ? source.cardio_ids : catalogIds;
+  let editor = null;
   const advancedOpen = new WeakSet();
   const removedExercises = new WeakMap();
   const state = {
     programName: source.program.name,
+    goal: source.program.goal,
+    revision: source.revision,
     days: source.days.map((day) => ({
       ...day,
       client_key: `day-${day.id}`,
@@ -108,8 +116,8 @@
       name,
       description: "",
       estimated_duration_minutes: 45,
-      goal: "strength",
-      allowed_exercise_ids: null,
+      goal: state.goal || source.default_day_goal,
+      allowed_exercise_ids: allowedIds(state.goal || source.default_day_goal),
       exercises: [],
     };
   };
@@ -199,14 +207,24 @@
     controls.reorderDays.classList.toggle("is-active", state.reorderingDays);
   }
 
+  function numberText(value) {
+    return value.trim()
+      .replace(/[٠-٩]/g, (digit) => String(digit.charCodeAt(0) - 0x660))
+      .replace(/[۰-۹]/g, (digit) => String(digit.charCodeAt(0) - 0x6f0))
+      .replace(/[٫,]/g, ".");
+  }
+
+  function parseNumber(value) {
+    return /^\d+(?:\.\d+)?$/.test(value) ? Number(value) : NaN;
+  }
+
   function makeInputField(labelText, value, options = {}) {
     const wrapper = createElement("label", "builder-basic-field");
     const label = createElement("span", "", labelText);
     const input = document.createElement("input");
-    input.type = options.type || "number";
-    input.min = options.min ?? "0";
-    input.step = options.step || "1";
-    if (options.max) input.max = options.max;
+    input.type = "text";
+    input.inputMode = options.step === "any" ? "decimal" : "numeric";
+    input.dir = "ltr";
     if (value !== null && value !== undefined && value !== "") input.value = value;
     if (value === null) input.placeholder = labels.mixed;
     input.dataset.exerciseField = options.field;
@@ -266,9 +284,9 @@
     const label = createElement("label", "builder-table-field");
     label.append(createElement("span", "sr-only", `${labelText}, ${labels.set} ${setIndex + 1}`));
     const input = document.createElement("input");
-    input.type = "number";
-    input.min = "0";
-    input.step = field === "weight_kg" || options.minutes ? "any" : "1";
+    input.type = "text";
+    input.inputMode = field === "weight_kg" || options.minutes ? "decimal" : "numeric";
+    input.dir = "ltr";
     input.value = field === "weight_kg" && Number(value) === 0 ? "" : value;
     input.dataset.setField = field;
     input.dataset.exerciseIndex = exerciseIndex;
@@ -483,9 +501,6 @@
     const day = activeDay();
     controls.selectedExercises.replaceChildren();
     if (!day) {
-      controls.dayName.value = "";
-      controls.dayDuration.value = "";
-      controls.dayDescription.value = "";
       controls.exerciseTitle.textContent = labels.dayPrefix;
       controls.exerciseCount.textContent = "";
       controls.emptyDay.hidden = false;
@@ -497,9 +512,6 @@
       controls.emptyDay.querySelector("button").disabled = true;
       return;
     }
-    controls.dayName.value = day.name;
-    controls.dayDuration.value = day.estimated_duration_minutes;
-    controls.dayDescription.value = day.description;
     controls.removeDay.disabled = false;
     controls.editDay.disabled = false;
     controls.reorderExercises.disabled = day.exercises.length < 2;
@@ -507,8 +519,7 @@
     controls.addSelectedInline.disabled = false;
     controls.emptyDay.querySelector("button").disabled = false;
     controls.exerciseTitle.textContent = day.name;
-    const exerciseLabel = day.exercises.length === 1 ? labels.exerciseCountOne : labels.exerciseCountMany;
-    controls.exerciseCount.textContent = `${day.exercises.length} ${exerciseLabel}`;
+    controls.exerciseCount.textContent = `${labels.exerciseCount} · ${day.exercises.length}`;
     controls.emptyDay.hidden = day.exercises.length > 0;
     day.exercises.forEach((exercise, index) => {
       const card = renderExerciseCard(exercise, index);
@@ -518,6 +529,13 @@
 
   function renderCategoryOptions() {
     const day = activeDay();
+    if ((state.goal || day?.goal) === "cardio") {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = labels.cardioOnly;
+      controls.category.replaceChildren(option);
+      return;
+    }
     const available = source.exercises.filter((exercise) => (
       !day || !Array.isArray(day.allowed_exercise_ids) || day.allowed_exercise_ids.includes(exercise.id)
     ));
@@ -541,6 +559,7 @@
   function renderLibrary() {
     const day = activeDay();
     const term = controls.search.value.trim().toLocaleLowerCase();
+    const cardioOnly = (state.goal || day?.goal) === "cardio";
     const categoryKey = controls.category.value;
     const added = new Set(day ? day.exercises.map((exercise) => exercise.exercise_id) : []);
     const filtered = source.exercises.filter((exercise) => {
@@ -552,6 +571,7 @@
         exercise.arabic_name,
         exercise.category,
         exercise.group,
+        cardioOnly && exercise.conditioning ? labels.conditioning : "",
         ...(exercise.muscles || []).map((muscle) => muscle.name),
         ...(exercise.equipment || []),
       ].join(" ").toLocaleLowerCase();
@@ -561,8 +581,11 @@
     controls.libraryList.replaceChildren();
     const grouped = new Map();
     filtered.forEach((exercise) => {
-      const groupKey = `${exercise.category_key}:${exercise.group || ""}`;
-      if (!grouped.has(groupKey)) grouped.set(groupKey, { title: exercise.group || exercise.category, items: [] });
+      const groupKey = cardioOnly ? (exercise.conditioning ? "conditioning" : "cardio") :
+        `${exercise.category_key}:${exercise.group || ""}`;
+      const title = cardioOnly ? (exercise.conditioning ? labels.conditioning : source.goals.cardio) :
+        exercise.group || exercise.category;
+      if (!grouped.has(groupKey)) grouped.set(groupKey, { title, items: [] });
       grouped.get(groupKey).items.push(exercise);
     });
     grouped.forEach((group) => {
@@ -622,7 +645,10 @@
       controls.libraryList.append(section);
     });
     if (!filtered.length) controls.libraryList.append(createElement("p", "builder-library-empty", labels.noResults));
-    controls.libraryCount.textContent = `${filtered.length}`;
+    const count = filtered.length;
+    const form = new Intl.PluralRules(document.documentElement.lang).select(count);
+    const key = `available${form[0].toUpperCase()}${form.slice(1)}`;
+    controls.libraryCount.textContent = labels[key].replace(/[0-9]+/, String(count));
     controls.clearSearch.hidden = !controls.search.value;
     updateSelectionCount();
   }
@@ -630,7 +656,7 @@
   function updateSelectionCount() {
     const count = state.selectedExercises.size;
     controls.selectionCount.textContent = count
-      ? `${count} ${labels.selected}`
+      ? `${labels.selected} · ${count}`
       : labels.selectExercises;
     controls.addSelected.disabled = count === 0 || !activeDay();
   }
@@ -825,29 +851,146 @@
     renderSelected();
   }
 
-  controls.programName.addEventListener("input", () => {
-    state.programName = controls.programName.value;
-    controls.programTitle.textContent = state.programName || labels.workoutProgram;
+  function editorError(message, focus) {
+    const error = editor.panel.querySelector(".builder-editor-error");
+    error.textContent = message;
+    error.hidden = !message;
+    focus?.focus();
+  }
+
+  function editorValues() {
+    return editor.day
+      ? [controls.dayName.value, controls.dayDuration.value, controls.dayDescription.value]
+      : [controls.programName.value, programGoal.value];
+  }
+
+  function editorChanged() {
+    return editor && editorValues().some((value, index) => value !== editor.original[index]);
+  }
+
+  function closeEditor(restoreFocus = true) {
+    if (!editor) return;
+    const { panel, trigger } = editor;
+    editor = null;
+    panel.open = false;
+    if (restoreFocus) trigger.focus();
+  }
+
+  function openEditor(panel, trigger) {
+    if (editor?.panel === panel) {
+      if (editorChanged()) editorError(labels.editorPending);
+      else closeEditor();
+      return;
+    }
+    if (editorChanged()) {
+      editorError(labels.editorPending, editor.input);
+      return;
+    }
+    closeEditor(false);
+    const day = panel === controls.daySettings ? activeDay() : null;
+    if (panel === controls.daySettings && !day) return;
+    const input = day ? controls.dayName : controls.programName;
+    input.value = day ? day.name : state.programName;
+    if (day) {
+      controls.dayDuration.value = day.estimated_duration_minutes;
+      controls.dayDescription.value = day.description;
+    } else {
+      programGoal.value = state.goal || "";
+    }
+    editor = { panel, trigger, input, day };
+    editor.original = editorValues();
+    root.querySelectorAll(".builder-exercise-menu[open]").forEach((menu) => { menu.open = false; });
+    panel.open = true;
+    editorError("");
+    input.focus();
+    input.select();
+  }
+
+  function applyEditor(restoreFocus = true) {
+    if (!editor) return true;
+    const { day, input } = editor;
+    const name = input.value.trim();
+    if (!name || Array.from(name).length > 120) {
+      editorError(labels.invalidName, input);
+      return false;
+    }
+    if (day) {
+      const rawDuration = numberText(controls.dayDuration.value);
+      const duration = Number(rawDuration);
+      if (!/^\d+$/.test(rawDuration) || !Number.isInteger(duration) || duration < 1 || duration > 2147483647) {
+        editorError(labels.invalidDuration, controls.dayDuration);
+        return false;
+      }
+      day.name = name;
+      day.estimated_duration_minutes = duration;
+      day.description = controls.dayDescription.value;
+    } else {
+      const goal = programGoal.value || null;
+      if (goal === "cardio" && state.goal !== goal) {
+        const conflicts = state.days.flatMap((day) => day.exercises
+          .filter((item) => !cardioIds.has(item.exercise_id))
+          .map((item) => `${day.name} · ${item.name}`));
+        if (conflicts.length) {
+          editorError(`${labels.cardioConflicts} ${conflicts.join(" · ")}`, programGoal);
+          return false;
+        }
+      }
+      state.programName = name;
+      if (goal !== state.goal) {
+        state.goal = goal;
+        if (goal && programGoal.options[0]?.value === "") programGoal.options[0].disabled = true;
+        state.selectedExercises.clear();
+        state.days.forEach((day) => {
+          day.goal = goal || day.goal;
+          day.allowed_exercise_ids = allowedIds(day.goal);
+        });
+      }
+      controls.programTitle.textContent = name;
+      goalLabel.textContent = source.goals[state.goal] || labels.mixedGoals;
+    }
+    closeEditor(restoreFocus);
     markDirty();
-  });
-  controls.dayName.addEventListener("input", () => {
-    const day = activeDay();
-    if (!day) return;
-    day.name = controls.dayName.value;
-    controls.exerciseTitle.textContent = day.name;
-    renderDays();
-    markDirty();
-  });
-  controls.dayDuration.addEventListener("input", () => {
-    const day = activeDay();
-    if (day) day.estimated_duration_minutes = controls.dayDuration.value === "" ? "" : Number(controls.dayDuration.value);
-    markDirty();
-  });
-  controls.dayDescription.addEventListener("input", () => {
-    const day = activeDay();
-    if (day) day.description = controls.dayDescription.value;
-    markDirty();
-  });
+    render();
+    return true;
+  }
+
+  for (const panel of [controls.programSettings, controls.daySettings]) {
+    const summary = panel.querySelector("summary");
+    summary.addEventListener("click", (event) => {
+      event.preventDefault();
+      openEditor(panel, summary);
+    });
+    const form = panel.querySelector("form");
+    form.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.isComposing && event.target.matches("input")) {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      applyEditor();
+    });
+    panel.querySelector("[data-editor-cancel]").addEventListener("click", () => closeEditor());
+    panel.addEventListener("input", () => { if (editor?.panel === panel) editorError(""); });
+  }
+
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (editor && !editor.panel.contains(target) && !target.closest("#builder-save, #builder-edit-program-title, #builder-edit-day")) {
+      if (editorChanged()) {
+        event.preventDefault();
+        event.stopPropagation();
+        editorError(labels.editorPending, editor.input);
+        return;
+      }
+      closeEditor(false);
+    }
+    root.querySelectorAll(".builder-exercise-menu[open]").forEach((menu) => {
+      if (!menu.contains(target)) menu.open = false;
+    });
+  }, true);
+
   controls.search.addEventListener("input", renderLibrary);
   controls.clearSearch.addEventListener("click", () => {
     controls.search.value = "";
@@ -875,16 +1018,10 @@
     state.reorderingExercises = !state.reorderingExercises;
     renderReorderControls();
   });
-  document.getElementById("builder-edit-program-title").addEventListener("click", () => {
-    controls.programSettings.open = true;
-    controls.programName.focus();
-    controls.programName.select();
+  document.getElementById("builder-edit-program-title").addEventListener("click", (event) => {
+    openEditor(controls.programSettings, event.currentTarget);
   });
-  controls.editDay.addEventListener("click", () => {
-    controls.daySettings.open = true;
-    controls.dayName.focus();
-    controls.dayName.select();
-  });
+  controls.editDay.addEventListener("click", (event) => openEditor(controls.daySettings, event.currentTarget));
   controls.openLibrary.addEventListener("click", () => openLibrary(controls.openLibrary));
   document.querySelector("[data-open-library]").addEventListener("click", (event) => {
     openLibrary(event.currentTarget);
@@ -910,6 +1047,17 @@
     controls.preview.close();
   });
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && editor) {
+      event.preventDefault();
+      closeEditor();
+      return;
+    }
+    const openMenu = root.querySelector(".builder-exercise-menu[open]");
+    if (event.key === "Escape" && openMenu) {
+      openMenu.open = false;
+      openMenu.querySelector("summary").focus();
+      return;
+    }
     if (event.key === "Escape" && controls.preview.open) {
       event.preventDefault();
       closePreview();
@@ -982,7 +1130,8 @@
   controls.removeDay.addEventListener("click", () => {
     const day = activeDay();
     if (!day) return;
-    if (day.id && !window.confirm(labels.confirmRemoveDay)) return;
+    if (!window.confirm(labels.confirmRemoveDay)) return;
+    closeEditor(false);
     state.days = state.days.filter((item) => item.client_key !== day.client_key);
     state.activeKey = state.days.length ? state.days[0].client_key : null;
     state.selectedExercises.clear();
@@ -1054,35 +1203,35 @@
     if (target.dataset.setField && target.dataset.setField !== "set_type") {
       const set = day.exercises[Number(target.dataset.exerciseIndex)]?.sets[Number(target.dataset.setIndex)];
       if (!set) return;
-      const value = target.value;
-      if (target.dataset.setField === "weight_kg") set.weight_kg = value === "" ? 0 : Number(value);
-      else if (target.dataset.setField === "duration_minutes") set.duration_seconds = Math.round(Number(value) * 60);
-      else set[target.dataset.setField] = value === "" ? "" : Number(value);
+      const value = numberText(target.value);
+      if (target.dataset.setField === "weight_kg") set.weight_kg = value === "" ? 0 : parseNumber(value);
+      else if (target.dataset.setField === "duration_minutes") set.duration_seconds = value === "" ? 0 : Math.round(parseNumber(value) * 60);
+      else set[target.dataset.setField] = value === "" ? "" : parseNumber(value);
       markDirty();
       return;
     }
     if (!target.dataset.exerciseField || target.dataset.exerciseField === "set_count") return;
     const exercise = day.exercises[Number(target.dataset.exerciseIndex)];
     if (!exercise) return;
-    const value = target.value;
+    const value = target.dataset.exerciseField === "notes" ? target.value : numberText(target.value);
     switch (target.dataset.exerciseField) {
       case "rest_seconds":
-        exercise.rest_seconds = value === "" ? "" : Number(value);
+        exercise.rest_seconds = value === "" ? "" : parseNumber(value);
         break;
       case "notes":
         exercise.notes = value;
         break;
       case "basic_reps":
-        exercise.sets.forEach((set) => { set.reps = value === "" ? "" : Number(value); });
+        exercise.sets.forEach((set) => { set.reps = value === "" ? "" : parseNumber(value); });
         break;
       case "basic_weight":
-        exercise.sets.forEach((set) => { set.weight_kg = value === "" ? 0 : Number(value); });
+        exercise.sets.forEach((set) => { set.weight_kg = value === "" ? 0 : parseNumber(value); });
         break;
       case "basic_duration_minutes":
-        exercise.sets.forEach((set) => { set.duration_seconds = Math.round(Number(value) * 60); });
+        exercise.sets.forEach((set) => { set.duration_seconds = value === "" ? 0 : Math.round(parseNumber(value) * 60); });
         break;
       case "basic_duration_seconds":
-        exercise.sets.forEach((set) => { set.duration_seconds = value === "" ? 0 : Number(value); });
+        exercise.sets.forEach((set) => { set.duration_seconds = value === "" ? 0 : parseNumber(value); });
         break;
       default:
         return;
@@ -1097,9 +1246,10 @@
     const exercise = day.exercises[Number(target.dataset.exerciseIndex)];
     if (!exercise) return;
     if (target.dataset.exerciseField === "set_count") {
-      const requestedCount = Number(target.value);
-      if (!target.value || !Number.isInteger(requestedCount) || requestedCount < 0 || requestedCount > 50) {
+      const requestedCount = parseNumber(numberText(target.value));
+      if (!target.value || !Number.isInteger(requestedCount) || requestedCount < 1 || requestedCount > 50) {
         target.value = exercise.sets.length;
+        setStatus(labels.invalidValues, true);
         return;
       }
       if (requestedCount < exercise.sets.length) {
@@ -1122,6 +1272,10 @@
       exercise.sets[Number(target.dataset.setIndex)].set_type = target.value;
       markDirty();
     } else if (target.dataset.setField || target.dataset.exerciseField) {
+      if (target.matches("input") && target.value.trim() && !Number.isFinite(parseNumber(numberText(target.value)))) {
+        setStatus(labels.invalidValues, true);
+        return;
+      }
       syncSetFields(target.closest(".builder-exercise-card"), exercise);
     }
   });
@@ -1149,6 +1303,20 @@
 
   async function saveProgram() {
     if (state.saving) return;
+    if (editorChanged() && !applyEditor(false)) return;
+    closeEditor(false);
+    const invalid = (value, max, integer = true) => value === "" || value == null ||
+      !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > max ||
+      (integer && !Number.isInteger(Number(value)));
+    if (state.days.some((day) => day.exercises.some((exercise) =>
+      invalid(exercise.rest_seconds, 2147483647) || exercise.sets.some((set) =>
+        invalid(set.reps, 2147483647) || invalid(set.duration_seconds, 2147483647) ||
+        invalid(set.weight_kg, 10000, false)
+      )
+    ))) {
+      setStatus(labels.invalidValues, true);
+      return;
+    }
     if (
       !state.programName.trim()
       || state.days.some((day) => !day.name.trim()
@@ -1160,6 +1328,8 @@
     }
     const payload = {
       name: state.programName,
+      goal: state.goal,
+      revision: state.revision,
       days: state.days.map((day) => ({
         id: day.id,
         client_key: day.client_key,
@@ -1199,6 +1369,7 @@
       const result = await response.json().catch(() => null);
       if (!result) throw new Error(labels.saveError);
       if (!response.ok) throw new Error(result.error || labels.saveError);
+      state.revision = result.revision;
       state.programName = result.program_name;
       controls.programName.value = result.program_name;
       controls.programTitle.textContent = result.program_name;
@@ -1206,6 +1377,7 @@
         const savedDay = result.records[day.client_key];
         if (!savedDay) return;
         day.id = savedDay.id;
+        day.name = savedDay.name;
         removedExercises.delete(day);
         day.exercises.forEach((exercise) => {
           const savedExercise = savedDay.exercises[String(exercise.exercise_id)];
@@ -1222,7 +1394,7 @@
       render();
       syncDayUrl();
     } catch (error) {
-      setStatus(error.message || labels.saveError, true);
+      setStatus(error instanceof TypeError ? labels.saveError : error.message || labels.saveError, true);
     } finally {
       state.saving = false;
       editingRegions.forEach((region) => { region.inert = false; });
@@ -1231,7 +1403,7 @@
   }
   controls.save.addEventListener("click", saveProgram);
   window.addEventListener("beforeunload", (event) => {
-    if (!state.dirty) return;
+    if (!state.dirty && !editorChanged()) return;
     event.preventDefault();
     event.returnValue = labels.confirmLeave;
   });

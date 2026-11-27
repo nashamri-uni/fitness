@@ -4,7 +4,7 @@
 {% block title %}{% trans "Delete plan" %} &middot; FitPlanner{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 560px;">
+<div class="card form-panel form-panel--compact">
   <h2>{% trans "Delete workout plan" %}</h2>
   <p>
     {% blocktrans with name=plan.name %}Are you sure you want to delete <strong>{{ name }}</strong>? Its exercises and planned sets will be removed. Logged sessions are kept.{% endblocktrans %}

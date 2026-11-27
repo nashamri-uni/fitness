@@ -1,86 +1,161 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{% trans "Active session" %} &middot; FitPlanner{% endblock %}
+{% block title %}{{ session.name }} · FitPlanner{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{% static 'css/active-workout.css' %}">{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>{% blocktrans with name=session.name %}Active session: {{ name }}{% endblocktrans %}</h2>
-  <p class="muted">
-    {% blocktrans with started=session.started_at|date:"Y-m-d H:i" elapsed=elapsed_minutes %}Started {{ started }} &middot; {{ elapsed }} minutes elapsed{% endblocktrans %}
-    {% if session.plan %}
-      &middot; {% trans "plan" %}: <a href="{% url 'plans:detail' session.plan.pk %}">{{ session.plan.name }}</a>
-    {% endif %}
-  </p>
-  <p class="muted">
-    {% blocktrans with sets=session.total_sets volume=session.total_volume|floatformat:1 %}Sets logged so far: {{ sets }} &middot; volume: {{ volume }} kg{% endblocktrans %}
-  </p>
-</div>
-
-{% for item in entries %}
-  <div class="card">
-    <div class="exercise-entry-heading">
-      {% if item.entry.exercise.local_thumbnail_url and item.entry.exercise.local_image_url %}
-        <a class="exercise-animation-link" href="{% url 'exercises:detail' item.entry.exercise.pk %}">
-          <img class="exercise-thumbnail exercise-thumbnail--selected" src="{{ item.entry.exercise.local_thumbnail_url }}" alt="{{ item.entry.exercise.display_name }}" width="320" height="320" loading="lazy" decoding="async">
-        </a>
+<section class="active-workout" id="active-workout" data-session="{{ session.pk }}" data-started="{{ session.started_at|date:'c' }}">
+  <header class="workout-bar">
+    <div class="workout-heading">
+      <span class="workout-live">{% trans "Active session" %}</span>
+      <h1><bdi>{{ session.name }}</bdi></h1>
+      {% if session.plan_id %}
+        <p class="workout-program-context">
+          <bdi>{{ session.plan.program.name }}</bdi>
+          <span aria-hidden="true">·</span>
+          <span>{% if session.plan.program.goal %}{{ session.plan.program.get_goal_display }}{% else %}{{ session.plan.get_goal_display }}{% endif %}</span>
+        </p>
       {% endif %}
-      <h3>{{ forloop.counter }}. {{ item.entry.exercise.display_name }}</h3>
+    </div>
+    <div class="workout-elapsed">
+      <time id="workout-elapsed" dir="ltr">00:00</time>
+      <small>{% trans "Elapsed" %}</small>
+    </div>
+    <button type="button" class="workout-finish" id="workout-finish">{% trans "Finish workout" %}</button>
+    <div class="workout-progress">
+      <div class="workout-progress-counts">
+        <span><strong id="workout-exercise-count" dir="ltr">0 / {{ entries|length }}</strong> {% trans "Exercises" %}</span>
+        <span><strong id="workout-set-count" dir="ltr">0 / 0</strong> {% trans "Sets" %}</span>
+      </div>
+      <progress id="workout-progress" value="0" max="1" aria-label="{% trans 'Workout progress' %}"></progress>
+    </div>
+  </header>
+
+  <div class="workout-grid">
+    <div class="workout-exercises">
+      {% for item in entries %}
+      <article class="workout-exercise" data-entry="{{ item.entry.pk }}" data-log-url="{% url 'workouts:log_set' item.entry.pk %}">
+        <header class="workout-exercise-head">
+          <a class="workout-exercise-preview" href="{% url 'exercises:detail' item.entry.exercise_id %}" data-preview>
+            {% if item.data.thumbnail %}
+              <img src="{{ item.data.thumbnail }}" alt="" width="52" height="52" loading="lazy" decoding="async">
+            {% else %}
+              <span class="workout-image-placeholder" aria-hidden="true">◇</span>
+            {% endif %}
+            <span class="workout-exercise-title">
+              <strong><bdi>{{ item.data.name }}</bdi></strong>
+              <small>{{ item.data.muscles|join:", "|default_if_none:"" }}</small>
+            </span>
+          </a>
+          <div class="workout-exercise-controls">
+            {% if item.data.kind == "bodyweight" %}
+            <details class="workout-exercise-menu">
+              <summary aria-label="{% trans 'More actions' %}">···</summary>
+              <div>
+                  <button type="button" data-action="weight" aria-pressed="{{ item.data.weighted|yesno:'true,false' }}">{% trans "Additional weight" %}</button>
+              </div>
+            </details>
+            {% endif %}
+            <button type="button" class="workout-collapse" data-action="collapse" aria-expanded="true"
+              aria-controls="workout-entry-{{ item.entry.pk }}" aria-label="{% trans 'Collapse exercise' %}">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+            </button>
+          </div>
+          <div class="workout-exercise-meta">
+            <span class="workout-exercise-state" data-state></span>
+            <span><strong data-exercise-progress dir="ltr"></strong> {% if item.data.kind == "cardio" %}{% trans "Intervals" %}{% else %}{% trans "Sets" %}{% endif %}</span>
+            <span>{% if item.data.rest %}{% trans "Rest" %} <bdi>{{ item.data.rest }} {% trans "sec" %}</bdi>{% else %}{% trans "No rest" %}{% endif %}</span>
+          </div>
+        </header>
+        <div id="workout-entry-{{ item.entry.pk }}" class="workout-exercise-body">
+          {% if item.entry.notes %}<p class="workout-exercise-notes" dir="auto">{{ item.entry.notes }}</p>{% endif %}
+          <table class="workout-set-table">
+            <thead><tr data-head></tr></thead>
+            <tbody data-rows></tbody>
+          </table>
+          <div class="workout-exercise-footer">
+            <button type="button" data-action="add" class="workout-add">+ {% if item.data.kind == "cardio" %}{% trans "Add interval" %}{% else %}{% trans "Add set" %}{% endif %}</button>
+          </div>
+        </div>
+      </article>
+      {% empty %}
+        <p class="workout-exercise">{% trans "No exercises in this workout." %}</p>
+      {% endfor %}
     </div>
 
-    {% if item.planned_sets %}
-      <p class="muted">{% trans "Planned:" %}
-        {% for set in item.planned_sets %}
-          <span class="pill">
-            {% blocktrans with number=set.set_number reps=set.reps weight=set.weight_kg %}set {{ number }}: {{ reps }} reps @ {{ weight }} kg{% endblocktrans %}
-          </span>
-        {% endfor %}
-      </p>
-    {% endif %}
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{% trans "Set" %}</th>
-            <th>{% trans "Reps" %}</th>
-            <th>{% trans "Weight (kg)" %}</th>
-            <th>{% trans "Duration" %}</th>
-            <th>{% trans "RPE" %}</th>
-            <th>{% trans "PR" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for set in item.logged_sets %}
-            <tr>
-              <td>{{ set.set_number }}</td>
-              <td>{{ set.reps_completed }}</td>
-              <td>{{ set.weight_kg }}</td>
-              <td>{{ set.duration_seconds }}s</td>
-              <td>{{ set.rpe|default:"&mdash;" }}</td>
-              <td>{% if set.is_personal_record %}<span class="tag tag-pr">{% trans "PR" %}</span>{% endif %}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="muted">{% trans "Nothing logged yet." %}</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <form method="post" action="{% url 'workouts:log_set' item.entry.pk %}">
-      {% csrf_token %}
-      {% include "partials/form_fields.html" with form=item.form %}
-      <div class="form-actions"><button type="submit">{% trans "Log set" %}</button></div>
-    </form>
   </div>
-{% endfor %}
 
-<div class="card">
-  <h3>{% trans "Finish session" %}</h3>
-  <form method="post" action="{% url 'workouts:complete' session.pk %}">
-    {% csrf_token %}
-    {% include "partials/form_fields.html" with form=complete_form %}
-    <div class="form-actions"><button type="submit">{% trans "Complete session" %}</button></div>
-  </form>
-</div>
+  <p class="workout-feedback" id="workout-feedback" role="status" aria-live="polite"></p>
+
+  <dialog class="workout-dialog workout-preview" id="workout-preview" aria-labelledby="workout-preview-title">
+    <header class="workout-dialog-head">
+      <h2 id="workout-preview-title" dir="auto"></h2>
+      <button type="button" data-close aria-label="{% trans 'Close exercise details' %}">×</button>
+    </header>
+    <div class="workout-preview-grid">
+      <div class="workout-preview-media">
+        <img alt="" id="workout-preview-image" hidden>
+        <span id="workout-preview-empty" hidden>{% trans "No animation available" %}</span>
+      </div>
+      <div class="workout-preview-info">
+        <h3>{% trans "Target muscles" %}</h3><p id="workout-preview-muscles"></p>
+        <h3>{% trans "Equipment" %}</h3><p id="workout-preview-equipment"></p>
+        <h3>{% trans "Instructions" %}</h3><p dir="auto" id="workout-preview-instructions"></p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="workout-dialog workout-completion" id="workout-completion" aria-labelledby="workout-completion-title">
+    <header class="workout-dialog-head">
+      <h2 id="workout-completion-title">{% trans "Finish workout" %}</h2>
+      <button type="button" data-close aria-label="{% trans 'Cancel' %}">×</button>
+    </header>
+    <form method="post" action="{% url 'workouts:complete' session.pk %}" id="workout-complete-form">
+      {% csrf_token %}
+      <input type="hidden" name="allow_incomplete" value="no">
+      <p id="workout-incomplete" class="workout-incomplete" hidden>{% trans "Some planned sets are incomplete. You can still finish and keep the sets you logged." %}</p>
+      <label for="id_notes">{% trans "Notes (optional)" %}</label>
+      <textarea id="id_notes" name="notes" rows="2"></textarea>
+      <label for="id_rating">{% trans "Rating (optional)" %}</label>
+      <select id="id_rating" name="rating">
+        <option value="">—</option>
+        <option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option>
+        <option value="2">2 / 5</option><option value="1">1 / 5</option>
+      </select>
+      <p id="workout-completion-error" role="alert" hidden></p>
+      <div class="workout-completion-actions">
+        <button type="button" class="btn-secondary" data-close autofocus>{% trans "Keep training" %}</button>
+        <button type="submit">{% trans "Finish workout" %}</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div hidden id="workout-labels"
+       data-set="{% trans 'Set' %}" data-interval="{% trans 'Interval' %}" data-previous="{% trans 'Previous' %}"
+       data-previous-title="{% trans 'Actual performance from your previous completed workout' %}"
+       data-reps="{% trans 'Reps' %}" data-weight="{% trans 'kg' %}" data-weight-label="{% trans 'Weight (kg)' %}"
+       data-duration="{% trans 'Seconds' %}" data-done="{% trans 'Done' %}"
+       data-complete-set="{% trans 'Complete set' %}" data-edit-set="{% trans 'Edit completed set' %}"
+       data-save-set="{% trans 'Save set changes' %}" data-undo-set="{% trans 'Undo completed set' %}"
+       data-cancel="{% trans 'Cancel' %}" data-logged="{% trans 'Set logged' %}" data-updated="{% trans 'Set updated' %}"
+       data-undone="{% trans 'Set undone' %}" data-saving="{% trans 'Saving…' %}"
+       data-error="{% trans 'Could not save. Your inputs are still here. Try again.' %}"
+       data-pr="{% trans 'Personal record' %}" data-new-record="{% trans 'New personal record!' %}"
+       data-active="{% trans 'Active' %}" data-upcoming="{% trans 'Upcoming' %}" data-completed="{% trans 'Completed' %}"
+       data-collapse="{% trans 'Collapse exercise' %}" data-expand="{% trans 'Expand exercise' %}"
+       data-set-actions="{% trans 'Set actions' %}" data-delete-extra="{% trans 'Delete additional set' %}"
+       data-confirm-delete-extra="{% trans 'Delete this additional set?' %}"
+       data-invalid-number="{% trans 'Enter a valid number within the allowed range.' %}"
+       data-start-timer="{% trans 'Start duration timer' %}" data-stop-timer="{% trans 'Stop duration timer' %}"
+       data-no-muscles="{% trans 'No target muscles recorded.' %}" data-no-equipment="{% trans 'No equipment required' %}"
+       data-no-instructions="{% trans 'No instructions recorded.' %}" data-finish-incomplete="{% trans 'Finish anyway' %}"
+       data-finish="{% trans 'Finish workout' %}"></div>
+  {{ workout_data|json_script:"active-workout-data" }}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/active-workout.js' %}" defer></script>
 {% endblock %}

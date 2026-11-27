@@ -4,7 +4,7 @@
 {% block title %}{% trans "Profile" %} &middot; FitPlanner{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 620px;">
+<div class="card form-panel profile-panel">
   <h2>{% trans "Profile" %}</h2>
   <p class="muted">
     {% blocktrans with username=user.username %}Signed in as <strong>{{ username }}</strong>.{% endblocktrans %}

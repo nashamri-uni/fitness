@@ -1,15 +1,22 @@
 """Workout session views (UC-18, UC-19, UC-20, UC-25)."""
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.views.decorators.http import require_POST
+from django.urls import reverse
 
 from plans.models import WorkoutPlan
 
 from .forms import CompleteSessionForm, SessionSetForm
 from .models import PersonalRecord, SessionExercise, WorkoutSession
-from .services import evaluate_personal_record, finish_session, start_session
+from .presentation import active_exercise, set_values, workout_summary
+from .services import (
+    evaluate_personal_record, finish_session, lock_active_session,
+    recalculate_personal_records, start_session,
+)
 
 
 @login_required
@@ -26,7 +33,7 @@ def session_detail(request, pk):
         WorkoutSession.objects.filter(user=request.user).prefetch_related("exercises__exercise", "exercises__sets"),
         pk=pk,
     )
-    return render(request, "workouts/session_detail.html", {"session": session})
+    return render(request, "workouts/session_detail.html", {"session": session, "summary": workout_summary(session)})
 
 
 @login_required
@@ -41,7 +48,6 @@ def start_session_view(request, plan_pk):
         return redirect("plans:detail", pk=plan.pk)
 
     session = start_session(request.user, plan)
-    messages.success(request, _("Session '%(name)s' started. Good luck!") % {"name": session.name})
     return redirect("workouts:active", pk=session.pk)
 
 
@@ -53,20 +59,12 @@ def active_session(request, pk):
     if session.is_finished:
         return redirect("workouts:detail", pk=session.pk)
 
-    entries = []
-    for entry in session.exercises.select_related("exercise"):
-        planned = []
-        if session.plan:
-            plan_entry = session.plan.exercises.filter(exercise=entry.exercise).first()
-            planned = list(plan_entry.sets.all()) if plan_entry else []
-        entries.append(
-            {
-                "entry": entry,
-                "planned_sets": planned,
-                "logged_sets": list(entry.sets.all()),
-                "form": SessionSetForm(initial={"set_number": entry.sets.count() + 1}),
-            }
+    entries = [
+        {"entry": entry, "data": active_exercise(entry, session)}
+        for entry in session.exercises.select_related("exercise").prefetch_related(
+            "sets", "exercise__muscle_links__muscle_group", "exercise__equipment_links__equipment",
         )
+    ]
 
     return render(
         request,
@@ -74,55 +72,107 @@ def active_session(request, pk):
         {
             "session": session,
             "entries": entries,
-            "complete_form": CompleteSessionForm(),
-            "elapsed_minutes": int((timezone.now() - session.started_at).total_seconds() // 60),
+            "workout_data": [item["data"] for item in entries],
         },
     )
 
 
 @login_required
+@require_POST
 def log_set(request, pk):
-    """UC-18/UC-24: store one logged set and detect personal records."""
-    entry = get_object_or_404(SessionExercise, pk=pk, session__user=request.user)
+    """Log, edit or undo one set, without writing planned or draft values."""
+    entry = get_object_or_404(
+        SessionExercise.objects.select_related("session", "exercise"), pk=pk, session__user=request.user,
+    )
+    ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-    if request.method == "POST":
-        form = SessionSetForm(request.POST)
-        if form.is_valid():
-            set_obj = form.save(commit=False)
-            set_obj.session_exercise = entry
-            set_obj.save()
+    def error(message, status=400):
+        if ajax:
+            return JsonResponse({"error": message}, status=status)
+        messages.error(request, message)
+        return redirect("workouts:active", pk=entry.session_id)
 
-            beaten = evaluate_personal_record(set_obj)
-            if beaten:
-                labels = ", ".join(str(dict(PersonalRecord.RecordType.choices)[r]) for r in beaten)
-                messages.success(request, _("New personal record for %(name)s: %(labels)s.") % {"name": entry.exercise.display_name(), "labels": labels})
-            else:
-                messages.success(request, _("Set logged for %(name)s.") % {"name": entry.exercise.display_name()})
+    operation = request.POST.get("operation", "log")
+    if operation not in {"log", "edit", "undo"}:
+        return error(_("Unknown set action."))
+    with transaction.atomic():
+        if not lock_active_session(entry.session_id, request.user):
+            return error(_("This workout is already finished."), 409)
+        logged = None
+        if operation != "log":
+            identifier = request.POST.get("logged_id", "")
+            if not identifier.isascii() or not identifier.isdecimal() or len(identifier) > 19:
+                return error(_("This set is no longer available."), 409)
+            logged = entry.sets.filter(pk=int(identifier)).first()
+            if logged is None:
+                if operation == "undo" and ajax:
+                    return JsonResponse({"set": None})
+                return error(_("This set is no longer available."), 409)
+
+        if operation == "undo":
+            recalculate_personal_records(entry, removed=logged.pk)
+            logged.delete()
+            result = {"set": None}
         else:
-            errors = "; ".join(
-                str(error) for errors in form.errors.values() for error in errors
-            )
-            messages.error(request, _("Could not log the set: %(errors)s") % {"errors": errors})
-
-    return redirect("workouts:active", pk=entry.session.pk)
+            data = request.POST.copy()
+            if logged:
+                data["set_number"] = logged.set_number
+                if "rpe" not in data:
+                    data["rpe"] = logged.rpe or ""
+            form = SessionSetForm(data, instance=logged)
+            if not form.is_valid():
+                return error(" ".join(str(item) for errors in form.errors.values() for item in errors))
+            item = form.save(commit=False)
+            item.session_exercise = entry
+            if operation == "log":
+                existing = entry.sets.filter(set_number=item.set_number).first()
+                if existing:
+                    if any(getattr(existing, field) != getattr(item, field) for field in form.fields):
+                        return error(_("This set was already logged. Refresh to see the saved values."), 409)
+                    return JsonResponse({"set": set_values(existing), "new_record": False}) if ajax else redirect(
+                        "workouts:active", pk=entry.session_id,
+                    )
+            item.save()
+            if operation == "log":
+                new_record = bool(evaluate_personal_record(item))
+            else:
+                new_record = recalculate_personal_records(entry, edited=item)
+            result = {"set": set_values(item), "new_record": new_record}
+    if ajax:
+        return JsonResponse(result)
+    return redirect("workouts:active", pk=entry.session_id)
 
 
 @login_required
+@require_POST
 def complete_session(request, pk):
     """UC-18: finish the session and store the summary."""
     session = get_object_or_404(WorkoutSession, pk=pk, user=request.user)
 
-    if request.method == "POST":
-        form = CompleteSessionForm(request.POST, instance=session)
-        if form.is_valid():
-            form.save()
-            # ended_at and duration_minutes are derived from the recorded timestamps.
-            finish_session(session)
-            messages.success(request, _("Session '%(name)s' completed.") % {"name": session.name})
-            return redirect("workouts:detail", pk=session.pk)
-        messages.error(request, _("Please correct the session details."))
-
-    return redirect("workouts:active", pk=session.pk)
+    ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    summary_url = reverse("workouts:detail", args=[session.pk])
+    with transaction.atomic():
+        session = lock_active_session(pk, request.user)
+        if session:
+            form = CompleteSessionForm(request.POST, instance=session)
+            entries = session.exercises.prefetch_related("sets")
+            incomplete = any(
+                {target["set_number"] for target in (entry.targets or {}).get("sets", [])}
+                - {item.set_number for item in entry.sets.all()}
+                for entry in entries
+            )
+            error = None
+            if incomplete and request.POST.get("allow_incomplete") != "yes":
+                error = _("Some planned sets remain. Confirm to finish this workout.")
+            elif not form.is_valid():
+                error = _("Please correct the session details.")
+            if error:
+                if ajax:
+                    return JsonResponse({"error": error, "incomplete": incomplete}, status=400)
+                messages.error(request, error)
+                return redirect("workouts:active", pk=pk)
+            finish_session(form.save(commit=False))
+    return JsonResponse({"url": summary_url}) if ajax else redirect(summary_url)
 
 
 @login_required

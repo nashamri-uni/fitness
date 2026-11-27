@@ -1,25 +1,40 @@
 """Forms for building and editing workout plans (FREQ-4 to FREQ-7)."""
 from django import forms
 from django.db.models import Q
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.translation import gettext_lazy as _
 
 from exercises.models import Exercise
 
-from .models import PlanExercise, PlanSet, WorkoutPlan
+from .models import PlanExercise, PlanSet, TrainingGoal, WorkoutPlan
+
+
+GOAL_DETAILS = {
+    TrainingGoal.HYPERTROPHY: ("↗", _("Build muscle with resistance training.")),
+    TrainingGoal.STRENGTH: ("◇", _("Improve the load you can lift.")),
+    TrainingGoal.WEIGHT_LOSS: ("◎", _("Combine strength work and conditioning.")),
+    TrainingGoal.MAINTENANCE: ("=", _("Maintain your current fitness.")),
+    TrainingGoal.CARDIO: ("∿", _("Improve cardiovascular fitness.")),
+    TrainingGoal.ENDURANCE: ("∞", _("Sustain effort over longer workouts.")),
+}
 
 
 class CreateWorkoutProgramForm(forms.Form):
+    goal = forms.ChoiceField(choices=TrainingGoal.choices, label=_("Training goal"), widget=forms.RadioSelect)
     program_name = forms.CharField(max_length=120, label=_("Program name"), initial=_("My program"))
     name = forms.CharField(max_length=120, label=_("First workout day"), initial=_("Day 1"))
     description = forms.CharField(
         required=False,
+        max_length=4000,
         label=_("Description"),
         widget=forms.Textarea(attrs={"rows": 3}),
     )
     estimated_duration_minutes = forms.IntegerField(
         min_value=1,
+        max_value=2147483647,
         initial=45,
         label=_("Estimated duration (minutes)"),
+        widget=forms.TextInput(attrs={"inputmode": "numeric"}),
     )
 
 
@@ -33,9 +48,9 @@ CARDIO_CONDITIONING_EXERCISES = (
 )
 
 
-def available_exercises_for_plan(plan):
+def available_exercises_for_goal(goal):
     exercises = Exercise.objects.filter(is_active=True)
-    if plan is not None and plan.goal == WorkoutPlan.Goal.CARDIO:
+    if goal == TrainingGoal.CARDIO:
         exercises = exercises.filter(
             Q(exercise_type=Exercise.ExerciseType.CARDIO)
             | Q(name__in=CARDIO_CONDITIONING_EXERCISES)
@@ -43,7 +58,19 @@ def available_exercises_for_plan(plan):
     return exercises
 
 
+def available_exercises_for_plan(plan):
+    if plan is None:
+        return available_exercises_for_goal(None)
+    program_goal = plan.program.goal if plan.program_id else None
+    return available_exercises_for_goal(program_goal or plan.goal)
+
+
 class WorkoutPlanForm(forms.ModelForm):
+    estimated_duration_minutes = forms.IntegerField(
+        min_value=1, max_value=2147483647, label=_("Estimated duration (minutes)"),
+    )
+    description = forms.CharField(required=False, max_length=4000, widget=forms.Textarea,
+                                  label=_("Description"))
     class Meta:
         model = WorkoutPlan
         fields = ["name", "description", "estimated_duration_minutes"]
@@ -88,3 +115,9 @@ class PlanSetForm(forms.ModelForm):
     class Meta:
         model = PlanSet
         fields = ["set_number", "reps", "duration_seconds", "weight_kg", "set_type"]
+
+    def clean_weight_kg(self):
+        value = self.cleaned_data["weight_kg"]
+        MinValueValidator(0)(value)
+        MaxValueValidator(10000)(value)
+        return value

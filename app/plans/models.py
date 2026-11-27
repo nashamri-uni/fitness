@@ -4,6 +4,15 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+class TrainingGoal(models.TextChoices):
+    STRENGTH = "strength", _("Strength")
+    HYPERTROPHY = "hypertrophy", _("Hypertrophy")
+    CARDIO = "cardio", _("Cardio")
+    ENDURANCE = "endurance", _("Endurance")
+    WEIGHT_LOSS = "weight_loss", _("Weight loss")
+    MAINTENANCE = "maintenance", _("Maintenance")
+
+
 class WorkoutProgram(models.Model):
     """A user-owned collection of reusable workout days."""
 
@@ -14,6 +23,8 @@ class WorkoutProgram(models.Model):
         db_column="User_ID",
     )
     name = models.CharField(max_length=120, db_column="Name", verbose_name=_("Name"))
+    goal = models.CharField(max_length=20, choices=TrainingGoal.choices, null=True, blank=True,
+                            db_column="Goal", verbose_name=_("Training goal"))
     created_at = models.DateTimeField(auto_now_add=True, db_column="Created_At", verbose_name=_("Created at"))
     updated_at = models.DateTimeField(auto_now=True, db_column="Updated_At", verbose_name=_("Updated at"))
 
@@ -29,13 +40,7 @@ class WorkoutProgram(models.Model):
 class WorkoutPlan(models.Model):
     """The WorkoutPlan table: a reusable workout plan owned by a user."""
 
-    class Goal(models.TextChoices):
-        STRENGTH = "strength", _("Strength")
-        HYPERTROPHY = "hypertrophy", _("Hypertrophy")
-        CARDIO = "cardio", _("Cardio")
-        ENDURANCE = "endurance", _("Endurance")
-        WEIGHT_LOSS = "weight_loss", _("Weight loss")
-        MAINTENANCE = "maintenance", _("Maintenance")
+    Goal = TrainingGoal
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="plans", db_column="User_ID"
@@ -63,13 +68,14 @@ class WorkoutPlan(models.Model):
 
     def save(self, *args, **kwargs):
         if self.program_id is None and self.user_id:
-            program, _created = WorkoutProgram.objects.get_or_create(
-                user_id=self.user_id,
-                name="My Program",
-            )
+            program = WorkoutProgram.objects.filter(
+                user_id=self.user_id, name="My Program", goal__isnull=True,
+            ).first() or WorkoutProgram.objects.create(user_id=self.user_id, name="My Program")
             self.program = program
             if self.pk is None:
                 self.program_order = program.days.count() + 1
+        if self.program_id and self.program.goal:
+            self.goal = self.program.goal
         super().save(*args, **kwargs)
 
     def __str__(self):
