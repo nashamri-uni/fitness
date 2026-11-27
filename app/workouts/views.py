@@ -11,11 +11,11 @@ from django.urls import reverse
 from plans.models import WorkoutPlan
 
 from .forms import CompleteSessionForm, SessionSetForm
-from .models import PersonalRecord, SessionExercise, WorkoutSession
+from .models import SessionExercise, WorkoutSession
 from .presentation import active_exercise, set_values, workout_summary
 from .services import (
     evaluate_personal_record, finish_session, lock_active_session,
-    recalculate_personal_records, start_session,
+    recalculate_personal_records, start_or_resume_session,
 )
 
 
@@ -47,7 +47,7 @@ def start_session_view(request, plan_pk):
         messages.error(request, _("This plan has no exercises yet. Add exercises before starting a session."))
         return redirect("plans:detail", pk=plan.pk)
 
-    session = start_session(request.user, plan)
+    session = start_or_resume_session(request.user, plan)
     return redirect("workouts:active", pk=session.pk)
 
 
@@ -177,6 +177,7 @@ def complete_session(request, pk):
 
 @login_required
 def personal_records(request):
-    """UC-25: view personal records."""
-    records = PersonalRecord.objects.filter(user=request.user).select_related("exercise", "session_set")
-    return render(request, "workouts/records.html", {"records": records})
+    """Keep saved links to the former records page working."""
+    params = request.GET.copy()
+    params["tab"] = "records"
+    return redirect(f"{reverse('analytics:dashboard')}?{params.urlencode()}")

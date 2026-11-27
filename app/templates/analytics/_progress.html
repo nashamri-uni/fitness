@@ -1,0 +1,123 @@
+{% load i18n l10n %}
+<div class="analytics-grid analytics-grid--progress">
+  <section class="analytics-panel analytics-trend">
+    <header class="analytics-panel-heading">
+      <div>
+        <h2>{% trans "Exercise performance" %}</h2>
+        <p>{% trans "Logged performance in completed workouts" %}</p>
+      </div>
+    </header>
+    {% if chosen %}
+      <div class="analytics-exercise-control">
+        <details class="analytics-exercise-picker" data-exercise-picker>
+          <summary>
+            {% include "analytics/_thumbnail.html" with exercise=chosen only %}
+            <span><small>{% trans "Exercise" %}</small><strong><bdi>{{ chosen.display_name }}</bdi></strong></span>
+          </summary>
+          <div class="analytics-exercise-options">
+            <label class="analytics-search" hidden data-exercise-search>
+              <span class="analytics-sr">{% trans "Search exercises" %}</span>
+              {% include "analytics/_search_icon.html" %}
+              <input type="search" placeholder="{% trans 'Search exercises' %}">
+            </label>
+            <div class="analytics-exercise-list">
+              {% for exercise in exercises %}
+                <a href="?tab=progress&amp;exercise={{ exercise.pk|unlocalize }}&amp;metric={{ metric.0 }}&amp;range={{ period }}&amp;muscle_range={{ muscle_period }}"
+                   data-exercise-option data-search="{{ exercise.name }} {{ exercise.name_ar }} {% for group in exercise.primary_muscles %}{{ group.name }} {{ group.name_ar }} {% endfor %}"{% if exercise.pk == chosen.pk %} aria-current="true"{% endif %}>
+                  {% include "analytics/_thumbnail.html" with exercise=exercise only %}
+                  <span>
+                    <strong><bdi>{{ exercise.display_name }}</bdi></strong>
+                    <small>{% for group in exercise.primary_muscles %}<bdi>{{ group.display_name }}</bdi>{% if not forloop.last %} · {% endif %}{% endfor %}</small>
+                  </span>
+                </a>
+              {% endfor %}
+              <p role="status" data-exercise-empty hidden>{% trans "No exercises match your search." %}</p>
+            </div>
+          </div>
+        </details>
+        <form method="get" class="analytics-filters analytics-filters--performance">
+          <input type="hidden" name="tab" value="progress">
+          <input type="hidden" name="exercise" value="{{ chosen.pk|unlocalize }}">
+          <input type="hidden" name="muscle_range" value="{{ muscle_period }}">
+          <label><span>{% trans "Metric" %}</span><select name="metric">
+            {% for key, label, unit, definition in metrics %}<option value="{{ key }}"{% if key == metric.0 %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select></label>
+          <label><span>{% trans "Time range" %}</span><select name="range">
+            {% for key, label in ranges %}<option value="{{ key }}"{% if key == period %} selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select></label>
+          <button type="submit">{% trans "Apply" %}</button>
+        </form>
+      </div>
+      <p class="analytics-metric-definition">{{ metric.3 }}</p>
+      {% if observations %}
+        <dl class="analytics-performance-facts">
+          <div><dt>{% trans "Starting value" %}</dt><dd><bdi data-number="{{ performance.first|unlocalize }}">{{ performance.first|floatformat:"-2" }}</bdi> <small>{{ metric.2 }}</small></dd></div>
+          <div><dt>{% trans "Latest value" %}</dt><dd><bdi data-number="{{ performance.latest|unlocalize }}">{{ performance.latest|floatformat:"-2" }}</bdi> <small>{{ metric.2 }}</small></dd></div>
+          <div><dt>{% trans "Best in range" %}</dt><dd><bdi data-number="{{ performance.best|unlocalize }}">{{ performance.best|floatformat:"-2" }}</bdi> <small>{{ metric.2 }}</small></dd></div>
+        </dl>
+        {{ points|json_script:"analytics-performance-data" }}
+        <div class="analytics-plot analytics-plot--trend" hidden>
+          <canvas data-performance-chart data-metric="{{ metric.1 }}" data-unit="{{ metric.2 }}" data-timezone="{{ chart_timezone }}" role="img" aria-label="{{ metric.1 }}"></canvas>
+        </div>
+        <div class="analytics-trend-changes">
+          {% if performance.delta %}
+            <div><span>{% trans "Change in range" %}</span>{% include "analytics/_change.html" with value=performance.delta.value percent=performance.delta.percent unit=metric.2 %}</div>
+            <div><span>{% trans "Since previous comparable workout" %}</span>{% include "analytics/_change.html" with value=performance.previous.value percent=performance.previous.percent unit=metric.2 %}</div>
+          {% else %}
+            <p>{% trans "Log another comparable workout to see a change." %}</p>
+          {% endif %}
+        </div>
+        <details class="analytics-data" data-chart-table open>
+          <summary>{% trans "View chart data" %}</summary>
+          <div class="analytics-table-wrap">
+            <table>
+              <thead><tr><th scope="col">{% trans "Date" %}</th><th scope="col">{{ metric.1 }} ({{ metric.2 }})</th><th scope="col">{% trans "Session" %}</th></tr></thead>
+              <tbody>
+                {% for point in observations %}
+                  <tr>
+                    <th scope="row"><time datetime="{{ point.date|date:'Y-m-d' }}" data-date>{{ point.date|date:"j M Y" }}</time></th>
+                    <td data-number="{{ point.value|unlocalize }}">{{ point.value|floatformat:"-2" }}</td>
+                    <td><a href="{% url 'workouts:detail' point.session %}">{% trans "View session" %}</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      {% else %}
+        <p class="analytics-empty">{% trans "No matching performance data in this time range. Try a different metric or a longer range." %}</p>
+      {% endif %}
+    {% else %}
+      <p class="analytics-empty">{% trans "Finish a workout with logged sets to see exercise performance here." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="analytics-panel analytics-distribution">
+    <header class="analytics-panel-heading">
+      <div><h2>{% trans "Muscle distribution" %}</h2><p>{% trans "Completed sets by primary muscle group" %}</p></div>
+    </header>
+    <form method="get" class="analytics-filters analytics-filters--distribution">
+      <input type="hidden" name="tab" value="progress">
+      {% if chosen %}<input type="hidden" name="exercise" value="{{ chosen.pk|unlocalize }}"><input type="hidden" name="metric" value="{{ metric.0 }}">{% endif %}
+      <input type="hidden" name="range" value="{{ period }}">
+      <label><span>{% trans "Time range" %}</span><select name="muscle_range">
+        {% for key, label in ranges %}<option value="{{ key }}"{% if key == muscle_period %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+      <button type="submit">{% trans "Apply" %}</button>
+    </form>
+    {% if distribution %}
+      <ul class="analytics-bars">
+        {% for row in distribution %}
+          <li>
+            <div><bdi>{{ row.name }}</bdi><strong data-number="{{ row.sets|unlocalize }}">{{ row.sets|floatformat:"-2" }}</strong></div>
+            <meter min="0" max="100" value="{{ row.percent|unlocalize }}" aria-hidden="true"></meter>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="analytics-distribution-total"><strong data-number="{{ distribution_total|unlocalize }}">{{ distribution_total }}</strong> {% trans "Completed sets" %}</p>
+      <p>{% trans "Sets are split evenly when an exercise has several primary muscles." %}</p>
+    {% else %}
+      <p class="analytics-empty">{% trans "No completed sets in this time range." %}</p>
+    {% endif %}
+  </section>
+</div>

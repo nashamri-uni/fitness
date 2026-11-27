@@ -1,14 +1,15 @@
 """Tests for analytics and improvement metrics (FREQ-9, FREQ-10, FREQ-12)."""
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import User, UserProfile, WeeklyWorkoutGoalHistory
-from exercises.models import Exercise
+from exercises.models import Equipment, Exercise, ExerciseEquipment, ExerciseMuscleGroup, MuscleGroup
 from plans.models import PlanExercise, WorkoutPlan
-from workouts.models import SessionExercise, SessionSet, WorkoutSession
+from workouts.models import PersonalRecord, SessionExercise, SessionSet, WorkoutSession
 from workouts.services import evaluate_personal_record
 
 from .services import (
@@ -235,7 +236,7 @@ class AnalyticsTests(TestCase):
         self.add_session(4, [(1, 10, 50)])
         response = self.client.get(reverse("analytics:dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Analytics dashboard")
+        self.assertContains(response, "Dashboard sections")
         self.assertContains(response, 'data-account-dropdown')
         self.assertContains(response, 'aria-controls="account-dropdown-menu"')
         self.assertContains(response, reverse("accounts:profile"))
@@ -243,18 +244,18 @@ class AnalyticsTests(TestCase):
         self.assertContains(response, 'method="post" action="/accounts/logout/"')
         self.assertContains(response, 'class="theme-toggle-moon"')
         self.assertContains(response, 'class="theme-toggle-sun"')
-        self.assertEqual(response.content.decode().count('aria-current="page"'), 1)
+        self.assertEqual(response.content.decode().count('aria-current="page"'), 2)
         self.assertNotContains(response, "Workout and Fitness Planner — Django project")
-        self.assertContains(response, "activity-chart")
-        self.assertContains(response, 'id="dashboard-details-dialog"')
-        for detail in ("sessions", "week", "plans", "goal", "records", "streak"):
-            self.assertContains(response, f'data-dashboard-detail="{detail}"')
-            self.assertContains(response, f'data-dashboard-detail-template="{detail}"')
+        self.assertContains(response, "data-activity-chart")
+        self.assertContains(response, "?tab=progress")
+        self.assertContains(response, "?tab=records")
+        self.assertNotContains(response, reverse("workouts:records"))
         self.assertNotContains(response, "Weekly training volume")
         self.assertNotContains(response, "Average RPE")
         self.assertNotContains(response, "Average session")
         self.assertNotContains(response, "Total volume (kg)")
-        self.assertEqual(response.content.decode().count('class="dashboard-stat-card'), 6)
+        self.assertEqual(response.content.decode().count('class="analytics-stat"'), 3)
+        self.assertContains(response, 'analytics-stat--gold')
 
     def test_dashboard_detail_queries_are_local_and_user_scoped(self):
         other_user = User.objects.create_user(username="other", password="pw12345678")
@@ -270,13 +271,13 @@ class AnalyticsTests(TestCase):
             self.add_session_on(other_user, monday + timedelta(days=1))
 
             response = self.client.get(reverse("analytics:dashboard"))
-            weekly_sessions = list(response.context["sessions_this_week"])
-            plans = list(response.context["plans"])
-            recent_sessions = list(response.context["recent_sessions"])
+            goal = response.context["goal"]
+            recent = response.context["recent"]
 
-        self.assertEqual(weekly_sessions, [completed])
-        self.assertEqual(plans, [self.plan])
-        self.assertTrue(all(session.user_id == self.user.pk for session in recent_sessions))
+        self.assertEqual(goal["sessions"], 1)
+        self.assertEqual(recent, completed)
+        self.assertEqual((recent.exercise_count, recent.set_count), (0, 0))
+        self.assertEqual(response.context["active_session"].user_id, self.user.pk)
         self.assertNotContains(response, other_plan.name)
 
     def test_dashboard_in_arabic_renders_translated_activity_controls(self):
@@ -286,17 +287,166 @@ class AnalyticsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "أسبوعي")
         self.assertContains(response, "يومي")
-        self.assertContains(response, "التقدم نحو الهدف الأسبوعي")
+        self.assertContains(response, "هدف التدريب الأسبوعي")
+        self.assertContains(response, "التقدم الرياضي")
+        self.assertContains(response, "الأرقام القياسية")
         self.assertContains(response, 'dir="rtl"')
 
     def test_dashboard_shows_empty_activity_message_without_completed_workouts(self):
         response = self.client.get(reverse("analytics:dashboard"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No completed workouts in this week.")
+        self.assertContains(response, "Your latest workout will appear here after you finish a session.")
+        self.assertEqual([row["sessions"] for row in response.context["activity_rows"]], [0] * 7)
 
     def test_progress_page(self):
         self.add_session(30, [(1, 10, 50)])
-        response = self.client.get(reverse("analytics:progress"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Improvement metrics")
+        url = reverse("analytics:dashboard")
+        self.assertRedirects(
+            self.client.get(reverse("analytics:progress"), {"range": "all", "tab": "records"}),
+            f"{url}?range=all&tab=progress",
+        )
+        self.assertRedirects(
+            self.client.get(reverse("workouts:records"), {"type": "max_weight"}),
+            f"{url}?type=max_weight&tab=records",
+        )
+        response = self.client.get(url, {"tab": "progress", "range": "all", "metric": "weight"})
+        self.assertContains(response, "Exercise performance")
+        self.assertContains(response, "Log another comparable workout to see a change.")
+        self.assertEqual(response.context["performance"]["latest"], 50)
+
+    def test_activity_periods_and_weekly_goal(self):
+        now = datetime(2026, 11, 26, 15, tzinfo=UTC)
+        with patch("django.utils.timezone.now", return_value=now):
+            today = timezone.localdate()
+            self.add_session_on(self.user, today)
+            self.add_session_on(self.user, today)
+            self.add_session_on(self.user, today - timedelta(weeks=1))
+            self.add_session_on(self.user, today, completed=False)
+            UserProfile.objects.update_or_create(user=self.user, defaults={"weekly_workout_goal": 3})
+            url = reverse("analytics:dashboard")
+            response = self.client.get(url)
+            self.assertEqual(response.context["weekly_deltas"], {"count": 1, "minutes": 60})
+            self.assertEqual([row["sessions"] for row in response.context["activity_rows"]], [0, 0, 0, 2, 0, 0, 0])
+            goal = response.context["goal"]
+            self.assertEqual((goal["sessions"], goal["days"], goal["remaining"], goal["percentage"]), (2, 1, 2, 33))
+            weeks = self.client.get(url, {"activity": "weekly"}).context["activity_rows"]
+            self.assertEqual(len(weeks), 8)
+            self.assertEqual([(row["sessions"], row["days"]) for row in weeks[-3:]], [(0, 0), (1, 1), (2, 1)])
+            prior_monday = today - timedelta(days=today.weekday(), weeks=1)
+            prior = self.client.get(url, {"week": prior_monday.isoformat()}).context["activity_rows"]
+            self.assertEqual(prior[0]["date"], prior_monday)
+            self.assertEqual(sum(row["sessions"] for row in prior), 1)
+
+    def test_performance_uses_chronology_ranges_and_zero_baselines(self):
+        older = self.add_session(50, [(1, 4, 0)])
+        peak = self.add_session(10, [(1, 5, 100), (2, 10, 95)])
+        latest = self.add_session(2, [(1, 6, 75)])
+        unfinished = self.add_session_on(self.user, timezone.localdate(), completed=False)
+        entry = SessionExercise.objects.create(session=unfinished, exercise=self.exercise)
+        SessionSet.objects.create(session_exercise=entry, reps_completed=20, weight_kg=900)
+        url = reverse("analytics:dashboard")
+        params = {"tab": "progress", "metric": "weight", "range": "all"}
+        response = self.client.get(url, params)
+        self.assertEqual([row["session"] for row in response.context["points"]], [older.pk, peak.pk, latest.pk])
+        self.assertEqual([row["value"] for row in response.context["points"]], [0, 100, 75])
+        facts = response.context["performance"]
+        self.assertEqual(facts["delta"], {"value": 75, "percent": None})
+        self.assertEqual(facts["previous"], {"value": -25, "percent": -25})
+        self.assertEqual(facts["best"], 100)
+        params["range"] = "1m"
+        filtered = self.client.get(url, params)
+        self.assertEqual(filtered.context["performance"]["first"], 100)
+        self.assertContains(filtered, "analytics-negative")
+
+    def test_cardio_duration_and_missing_metrics(self):
+        bike = Exercise.objects.create(name="Spin bike", name_ar="دراجة", exercise_type="cardio")
+        session = self.add_session_on(self.user, timezone.localdate() - timedelta(days=2))
+        entry = SessionExercise.objects.create(session=session, exercise=bike)
+        SessionSet.objects.bulk_create([
+            SessionSet(session_exercise=entry, duration_seconds=40, reps_completed=2),
+            SessionSet(session_exercise=entry, duration_seconds=20, reps_completed=4),
+        ])
+        second = self.add_session_on(self.user, timezone.localdate() - timedelta(days=1))
+        missing = SessionExercise.objects.create(session=second, exercise=bike)
+        SessionSet.objects.create(session_exercise=missing)
+        url = reverse("analytics:dashboard")
+        response = self.client.get(url, {"tab": "progress", "exercise": bike.pk, "metric": "weight"})
+        self.assertEqual([metric[0] for metric in response.context["metrics"]], ["duration"])
+        self.assertEqual([point["value"] for point in response.context["points"]], [60, None])
+        self.assertEqual(response.context["performance"]["latest"], 60)
+        self.assertIsNone(response.context["performance"]["delta"])
+
+    def test_epley_limits_and_exercise_picker_exclude_private_and_unlogged_exercises(self):
+        barbell = Equipment.objects.create(name="Barbell")
+        ExerciseEquipment.objects.create(exercise=self.exercise, equipment=barbell)
+        self.add_session(8, [(1, 5, 90), (2, 15, 210)])
+        private = Exercise.objects.create(name="Private exercise", exercise_type="strength")
+        other = User.objects.create_user(username="private")
+        entry = SessionExercise.objects.create(
+            session=self.add_session_on(other, timezone.localdate()), exercise=private,
+        )
+        SessionSet.objects.create(session_exercise=entry, reps_completed=5, weight_kg=300)
+        Exercise.objects.create(name="Unlogged exercise", exercise_type="strength")
+        response = self.client.get(reverse("analytics:dashboard"), {"tab": "progress", "exercise": private.pk, "metric": "e1rm"})
+        self.assertEqual(response.context["exercises"], [self.exercise])
+        self.assertEqual(response.context["observations"][0]["value"], 105)
+        self.assertNotContains(response, private.name)
+
+    def test_distribution_splits_primary_groups_and_never_counts_secondary_groups(self):
+        groups = [MuscleGroup.objects.create(name=name, body_region="lower") for name in ("Glutes", "Quads", "Calves")]
+        for group, role in zip(groups, ("primary", "primary", "secondary")):
+            ExerciseMuscleGroup.objects.create(exercise=self.exercise, muscle_group=group, role=role)
+        self.add_session(56, [(1, 6, 40)])
+        recent = self.add_session(1, [(1, 6, 70)])
+        unclassified = Exercise.objects.create(name="Unclassified movement", exercise_type="strength")
+        entry = SessionExercise.objects.create(session=recent, exercise=unclassified)
+        SessionSet.objects.create(session_exercise=entry, reps_completed=3)
+        response = self.client.get(reverse("analytics:dashboard"), {"tab": "progress", "muscle_range": "1m"})
+        self.assertEqual(response.context["distribution_total"], 2)
+        self.assertEqual({row["name"]: row["sets"] for row in response.context["distribution"]}, {
+            "Glutes": .5, "Quads": .5, "Unclassified": 1,
+        })
+
+    def test_record_filter_search_group_type_and_ownership(self):
+        self.exercise.name_ar = "قرفصاء"
+        self.exercise.save(update_fields=["name_ar"])
+        group = MuscleGroup.objects.create(name="Quads", body_region="lower")
+        ExerciseMuscleGroup.objects.create(exercise=self.exercise, muscle_group=group)
+        finished = self.add_session(1, [(1, 5, 100)])
+        other = User.objects.create_user(username="private")
+        PersonalRecord.objects.create(
+            user=other, exercise=self.exercise, record_type="max_weight", value=999, achieved_at=timezone.now(),
+        )
+        url = reverse("analytics:dashboard")
+        response = self.client.get(url, {"tab": "records", "muscle": group.pk, "type": "max_weight", "q": "قرفصاء"})
+        self.assertEqual(response.context["bests"], {"count": 3, "exercises": 1})
+        exercise, records = response.context["record_groups"][0]
+        self.assertEqual(exercise, self.exercise)
+        self.assertEqual([record.value for record in records], [100])
+        self.assertContains(response, reverse("workouts:detail", args=[finished.pk]))
+        unmatched = self.client.get(url, {"tab": "records", "q": "missing"})
+        self.assertContains(unmatched, "No personal bests match these filters.")
+
+    def test_overview_start_resumes_one_active_workout_and_checks_plan_owner(self):
+        url = reverse("analytics:dashboard")
+        start = reverse("workouts:start", args=[self.plan.pk])
+        self.assertContains(self.client.get(url), start)
+        created = self.client.post(start)
+        another = WorkoutPlan.objects.create(user=self.user, name="Another day")
+        PlanExercise.objects.create(plan=another, exercise=self.exercise)
+        repeated = self.client.post(reverse("workouts:start", args=[another.pk]))
+        self.assertEqual(repeated.url, created.url)
+        self.assertEqual(self.user.sessions.filter(ended_at__isnull=True).count(), 1)
+        response = self.client.get(url)
+        self.assertContains(response, "Continue Workout")
+        self.assertNotContains(response, "Start Workout")
+        private = WorkoutPlan.objects.create(user=User.objects.create_user(username="other"), name="Private")
+        self.assertEqual(self.client.post(reverse("workouts:start", args=[private.pk])).status_code, 404)
+
+    def test_empty_progress_and_records(self):
+        url = reverse("analytics:dashboard")
+        progress = self.client.get(url, {"tab": "progress"})
+        self.assertContains(progress, "Finish a workout with logged sets")
+        self.assertNotContains(progress, "data-performance-chart")
+        self.assertContains(self.client.get(url, {"tab": "records"}), "Your personal bests will appear here")

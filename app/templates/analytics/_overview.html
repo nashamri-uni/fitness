@@ -1,0 +1,186 @@
+{% load i18n l10n %}
+{% trans "min" as minute_unit %}
+<section class="analytics-stats" aria-label="{% trans 'Training summary' %}">
+  <article class="analytics-stat">
+    <header class="analytics-stat-heading">
+      <span class="analytics-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 5 2 2 4-4"/></svg></span>
+      <h2>{% trans "Completed workouts" %}</h2>
+    </header>
+    <strong data-number="{{ totals.count|unlocalize }}">{{ totals.count }}</strong>
+    <span>{% trans "This week" %}</span>
+    {% if weekly_deltas %}<span class="analytics-stat-comparison">{% include "analytics/_change.html" with value=weekly_deltas.count %} {% trans "vs. same time last week" %}</span>{% endif %}
+  </article>
+  <article class="analytics-stat">
+    <header class="analytics-stat-heading">
+      <span class="analytics-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg></span>
+      <h2>{% trans "Total training duration" %}</h2>
+    </header>
+    <strong><bdi data-number="{{ totals.minutes|unlocalize }}">{{ totals.minutes }}</bdi> <small>{{ minute_unit }}</small></strong>
+    <span>{% trans "This week" %}</span>
+    {% if weekly_deltas %}<span class="analytics-stat-comparison">{% include "analytics/_change.html" with value=weekly_deltas.minutes unit=minute_unit %} {% trans "vs. same time last week" %}</span>{% endif %}
+  </article>
+  <article class="analytics-stat">
+    <header class="analytics-stat-heading">
+      <span class="analytics-stat-icon analytics-stat-icon--streak" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M12 21a6.5 6.5 0 0 0 6.5-6.5c0-3-1.7-5.1-3.7-6.4.2 2-1 2.8-1 2.8.1-3.5-1.5-6-3.9-7.9.4 2.5-.3 4.1-1.6 5.9-1.4 1.8-2.8 3.3-2.8 5.6A6.5 6.5 0 0 0 12 21Z"/><path d="M9.5 18.6c0-1.6 1.2-2.9 2.5-3.8 1.3.9 2.5 2.2 2.5 3.8"/></svg></span>
+      <h2>{% trans "Training streak" %}</h2>
+    </header>
+    <strong data-number="{{ streak|unlocalize }}">{{ streak }}</strong>
+    <span>{% trans "Consecutive weeks through this week" %}</span>
+  </article>
+  <article class="analytics-stat analytics-stat--gold">
+    <header class="analytics-stat-heading">
+      <span class="analytics-stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 1v5m-4 2h8"/></svg></span>
+      <h2>{% trans "Personal Records" %}</h2>
+    </header>
+    <strong data-number="{{ record_count|unlocalize }}">{{ record_count }}</strong>
+    <a href="?tab=records">{% trans "Current personal bests" %}</a>
+  </article>
+</section>
+
+<div class="analytics-grid analytics-grid--overview">
+  <section class="analytics-panel analytics-activity">
+    <header class="analytics-panel-heading analytics-activity-heading">
+      <div>
+        <h2>{% trans "Training activity" %}</h2>
+        {% if activity_mode == "weekly" %}
+          <p><time datetime="{{ activity_start|date:'Y-m-d' }}" data-date>{{ activity_start|date:"j M Y" }}</time> – <time datetime="{{ activity_end|date:'Y-m-d' }}" data-date>{{ activity_end|date:"j M Y" }}</time></p>
+        {% endif %}
+      </div>
+      <div class="analytics-activity-controls">
+        {% if activity_mode == "daily" %}
+          <form method="get" class="analytics-filters--activity" data-activity-period hidden>
+            <input type="hidden" name="activity" value="daily">
+            <label class="analytics-sr" for="analytics-activity-week">{% trans "Week" %}</label>
+            <select id="analytics-activity-week" name="week">
+              {% for key, start, end in activity_weeks %}<option value="{{ key }}" data-date-end="{{ end|date:'Y-m-d' }}"{% if key == activity_week %} selected{% endif %}>{{ start|date:"j M" }} – {{ end|date:"j M Y" }}</option>{% endfor %}
+            </select>
+          </form>
+          <noscript>
+            <details class="analytics-activity-weeks">
+              <summary>{% trans "Week" %}</summary>
+              <ul>
+                {% for key, start, end in activity_weeks %}
+                  <li><a href="?activity=daily&amp;week={{ key }}"{% if key == activity_week %} aria-current="true"{% endif %}>{{ start|date:"j M" }} – {{ end|date:"j M Y" }}</a></li>
+                {% endfor %}
+              </ul>
+            </details>
+          </noscript>
+        {% endif %}
+        <nav class="analytics-segment" aria-label="{% trans 'Activity grouping' %}">
+          <a href="?activity=daily{% if request.GET.week %}&amp;week={{ activity_week }}{% endif %}"{% if activity_mode == 'daily' %} aria-current="true"{% endif %}>{% trans "Daily" %}</a>
+          <a href="?activity=weekly{% if request.GET.week %}&amp;week={{ activity_week }}{% endif %}"{% if activity_mode == 'weekly' %} aria-current="true"{% endif %}>{% trans "Weekly" %}</a>
+        </nav>
+      </div>
+    </header>
+    {% if activity_delta != None %}
+      <p class="analytics-comparison">
+        {% trans "Last full week vs. the week before" %}
+        {% include "analytics/_change.html" with value=activity_delta %}
+      </p>
+    {% endif %}
+    {{ activity_rows|json_script:"analytics-activity-data" }}
+    <div class="analytics-plot analytics-plot--activity" hidden>
+      <canvas data-activity-chart data-sessions="{% trans 'Completed workouts' %}" data-days="{% trans 'Training days' %}" role="img" aria-label="{% trans 'Training activity' %}"></canvas>
+    </div>
+    <details class="analytics-data" data-chart-table open>
+      <summary>{% trans "View chart data" %}</summary>
+      <div class="analytics-table-wrap">
+        <table>
+          <thead><tr><th scope="col">{% trans "Date" %}</th><th scope="col">{% trans "Completed workouts" %}</th>{% if activity_mode == "weekly" %}<th scope="col">{% trans "Training days" %}</th>{% endif %}</tr></thead>
+          <tbody>
+            {% for row in activity_rows %}
+              <tr>
+                <th scope="row">
+                  <time datetime="{{ row.date|date:'Y-m-d' }}" data-date>{{ row.date|date:"j M Y" }}</time>{% if row.end %} – <time datetime="{{ row.end|date:'Y-m-d' }}" data-date>{{ row.end|date:"j M Y" }}</time>{% endif %}
+                </th>
+                <td data-number="{{ row.sessions|unlocalize }}">{{ row.sessions }}</td>
+                {% if activity_mode == "weekly" %}<td data-number="{{ row.days|unlocalize }}">{{ row.days }}</td>{% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="analytics-panel analytics-goal">
+    <header class="analytics-panel-heading">
+      <div>
+        <h2>{% trans "Weekly training goal" %}</h2>
+        <p>{% trans "Monday to Sunday" %}</p>
+      </div>
+      <a class="analytics-text-link" href="{% url 'accounts:profile' %}">{% trans "Edit goal" %}</a>
+    </header>
+    {% if goal.goal %}
+      <div class="analytics-goal-progress">
+        <strong><bdi data-number="{{ goal.days|unlocalize }}">{{ goal.days }}</bdi> <span>/</span> <bdi data-number="{{ goal.goal|unlocalize }}">{{ goal.goal }}</bdi></strong>
+        <span>{% trans "Training days" %}</span>
+        <bdi data-percent="{{ goal.percentage|unlocalize }}">{{ goal.percentage }}%</bdi>
+      </div>
+      <progress max="100" value="{{ goal.percentage|unlocalize }}" aria-label="{% trans 'Weekly goal progress' %}"></progress>
+      {% if goal.remaining %}
+        <p data-localize-digits>{% blocktrans count count=goal.remaining %}{{ count }} training day remaining{% plural %}{{ count }} training days remaining{% endblocktrans %}</p>
+      {% else %}
+        <p class="analytics-positive">{% trans "Weekly goal reached" %}</p>
+      {% endif %}
+    {% else %}
+      <p>{% trans "Set a weekly training goal in your profile." %}</p>
+    {% endif %}
+    <ul class="analytics-days">
+      {% for day in goal_days %}
+        <li class="analytics-day analytics-day--{{ day.status }}">
+          <time datetime="{{ day.date|date:'Y-m-d' }}" data-date="weekday">{{ day.date|date:"D" }}</time>
+          {% if day.status == "done" %}<span aria-hidden="true">✓</span><span class="analytics-sr">{% trans "Training day" %}</span>
+          {% elif day.status == "rest" %}<span aria-hidden="true">–</span><span class="analytics-sr">{% trans "No completed workout" %}</span>
+          {% else %}<span aria-hidden="true">·</span><span class="analytics-sr">{% trans "Upcoming" %}</span>{% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+
+<div class="analytics-grid analytics-grid--workouts">
+  <section class="analytics-panel analytics-workout-actions">
+    <header class="analytics-panel-heading"><h2>{% trans "Workout actions" %}</h2></header>
+    {% if active_session %}
+      <div class="analytics-action-row">
+        <div><strong><bdi>{{ active_session.name }}</bdi></strong><p>{% trans "Workout in progress" %}</p></div>
+        <a class="btn btn-primary" href="{% url 'workouts:active' active_session.pk %}">{% trans "Continue Workout" %}</a>
+      </div>
+    {% elif plans %}
+      <ul class="analytics-plan-list">
+        {% for plan in plans %}
+          <li class="analytics-action-row">
+            <div><strong><bdi>{{ plan.name }}</bdi></strong><p><bdi>{{ plan.program.name }}</bdi></p></div>
+            <form method="post" action="{% url 'workouts:start' plan.pk %}">
+              {% csrf_token %}<button class="btn btn-primary" type="submit">{% trans "Start Workout" %}</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>{% trans "Add exercises to a workout day to start training." %}</p>
+      <a class="analytics-text-link" href="{% url 'plans:list' %}">{% trans "My Plans" %}</a>
+    {% endif %}
+  </section>
+
+  <section class="analytics-panel analytics-recent">
+    <header class="analytics-panel-heading"><h2>{% trans "Latest completed workout" %}</h2></header>
+    {% if recent %}
+      <div class="analytics-action-row">
+        <div>
+          <strong><bdi>{{ recent.name }}</bdi></strong>
+          <p><time datetime="{{ recent.started_at|date:'Y-m-d' }}" data-date>{{ recent.started_at|date:"j M Y" }}</time></p>
+        </div>
+        <a class="analytics-text-link" href="{% url 'workouts:detail' recent.pk %}">{% trans "View session" %}</a>
+      </div>
+      <dl class="analytics-session-facts">
+        <div><dt>{% trans "Duration" %}</dt><dd><bdi data-number="{{ recent.duration_minutes|unlocalize }}">{{ recent.duration_minutes }}</bdi> {{ minute_unit }}</dd></div>
+        <div><dt>{% trans "Exercises" %}</dt><dd data-number="{{ recent.exercise_count|unlocalize }}">{{ recent.exercise_count }}</dd></div>
+        <div><dt>{% trans "Completed sets" %}</dt><dd data-number="{{ recent.set_count|unlocalize }}">{{ recent.set_count }}</dd></div>
+      </dl>
+    {% else %}
+      <p>{% trans "Your latest workout will appear here after you finish a session." %}</p>
+    {% endif %}
+  </section>
+</div>

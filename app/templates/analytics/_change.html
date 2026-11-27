@@ -1,0 +1,6 @@
+{% load l10n %}
+<span class="analytics-change{% if value > 0 %} analytics-positive{% elif value < 0 %} analytics-negative{% endif %}">
+  {% if value > 0 %}<span aria-hidden="true">↑</span>{% elif value < 0 %}<span aria-hidden="true">↓</span>{% else %}<span aria-hidden="true">=</span>{% endif %}
+  <bdi data-number="{{ value|unlocalize }}" data-signed>{% if value > 0 %}+{% endif %}{{ value }}</bdi>{% if unit %} {{ unit }}{% endif %}
+  {% if percent != None and percent != "" %}<bdi data-percent="{{ percent|unlocalize }}" data-signed>({% if percent > 0 %}+{% endif %}{{ percent }}%)</bdi>{% endif %}
+</span>

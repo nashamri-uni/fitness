@@ -1,54 +1,28 @@
-"""Analytics dashboard views (UC-21, UC-23, UC-26, UC-27)."""
-import json
-
+"""Routes for the unified training dashboard."""
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.urls import reverse
 
-from plans.models import WorkoutPlan
-from workouts.models import WorkoutSession
-
-from .services import (
-    completed_sessions_this_week,
-    exercise_progress,
-    recent_personal_records,
-    summary,
-    weekly_volume,
-    workout_activity,
-)
+from .dashboard import overview_data, progress_data, records_data
 
 
 @login_required
 def dashboard(request):
-    """UC-26/UC-27: analytics dashboard with progress charts and trends."""
-    stats = summary(request.user)
-    chart = weekly_volume(request.user, weeks=12)
-    progress = exercise_progress(request.user)
-    records = recent_personal_records(request.user)
-    recent_sessions = WorkoutSession.objects.filter(user=request.user).select_related("plan")[:8]
-    sessions_this_week = completed_sessions_this_week(request.user)
-    plans = WorkoutPlan.objects.filter(user=request.user)
-    activity = workout_activity(request.user)
-
-    context = {
-        "stats": stats,
-        "chart": chart,
-        "chart_json": json.dumps(chart),
-        "activity": activity,
-        "progress": progress,
-        "records": records,
-        "recent_sessions": recent_sessions,
-        "sessions_this_week": sessions_this_week,
-        "plans": plans,
-    }
-    return render(request, "analytics/dashboard.html", context)
+    tab = request.GET.get("tab", "overview")
+    if tab == "progress":
+        context = progress_data(request.user, request.GET)
+    elif tab == "records":
+        context = records_data(request.user, request.GET)
+    else:
+        tab = "overview"
+        activity = "weekly" if request.GET.get("activity") == "weekly" else "daily"
+        context = overview_data(request.user, activity, request.GET.get("week"))
+    return render(request, "analytics/dashboard.html", {"tab": tab, **context})
 
 
 @login_required
 def progress(request):
-    """UC-21/UC-23: per-exercise progress over time and improvement metrics."""
-    context = {
-        "progress": exercise_progress(request.user, limit=20),
-        "chart_json": json.dumps(weekly_volume(request.user, weeks=12)),
-        "chart": weekly_volume(request.user, weeks=12),
-    }
-    return render(request, "analytics/progress.html", context)
+    """Keep saved links to the former progress page working."""
+    params = request.GET.copy()
+    params["tab"] = "progress"
+    return redirect(f"{reverse('analytics:dashboard')}?{params.urlencode()}")

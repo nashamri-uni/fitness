@@ -1,0 +1,11 @@
+{% load i18n %}
+<time datetime="{{ record.achieved_at|date:'Y-m-d' }}" data-date>{{ record.achieved_at|date:"j M Y" }}</time>
+{% with session=record.session_set.session_exercise.session %}
+  {% if session and session.user_id == user.pk %}
+    {% if session.is_finished %}
+      <a href="{% url 'workouts:detail' session.pk %}"><bdi>{{ session.name }}</bdi> <span class="analytics-sr">{% trans "View session" %}</span></a>
+    {% else %}
+      <a href="{% url 'workouts:active' session.pk %}"><bdi>{{ session.name }}</bdi> <span class="analytics-sr">{% trans "Continue Workout" %}</span></a>
+    {% endif %}
+  {% endif %}
+{% endwith %}

@@ -1,0 +1,5 @@
+{% load i18n l10n %}
+<strong class="analytics-record-value">
+  <bdi data-number="{{ record.value|unlocalize }}">{{ record.value|floatformat:"-2" }}</bdi>
+  <small>{% if record.record_type == "max_weight" %}{% trans "kg" %}{% elif record.record_type == "max_reps" %}{% trans "reps" %}{% elif record.record_type == "max_volume" %}{% trans "kg × reps" %}{% else %}{% trans "s" %}{% endif %}</small>
+</strong>
