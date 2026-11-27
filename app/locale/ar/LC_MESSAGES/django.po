@@ -482,6 +482,46 @@ msgstr "التتابع الأسبوعي"
 msgid "Weekly training volume"
 msgstr "حجم التدريب الأسبوعي"
 
+#: templates/analytics/dashboard.html
+msgid "Workout activity"
+msgstr "نشاط التمارين"
+
+#: templates/analytics/dashboard.html
+msgid "Activity view"
+msgstr "عرض النشاط"
+
+#: templates/analytics/dashboard.html
+msgid "Weekly"
+msgstr "أسبوعي"
+
+#: templates/analytics/dashboard.html
+msgid "Daily"
+msgstr "يومي"
+
+#: templates/analytics/dashboard.html
+msgid "Select week"
+msgstr "اختر الأسبوع"
+
+#: templates/analytics/dashboard.html
+msgid "Active workout days"
+msgstr "أيام التمرين النشطة"
+
+#: templates/analytics/dashboard.html
+msgid "Completed workouts"
+msgstr "التمارين المكتملة"
+
+#: templates/analytics/dashboard.html
+msgid "Workout days"
+msgstr "أيام التمرين"
+
+#: templates/analytics/dashboard.html
+msgid "No completed workouts in this week."
+msgstr "لا توجد تمارين مكتملة في هذا الأسبوع."
+
+#: templates/analytics/dashboard.html
+msgid "Chart library is unavailable, so activity cannot be displayed."
+msgstr "مكتبة الرسوم غير متوفرة، لذلك لا يمكن عرض النشاط."
+
 #: templates/analytics/dashboard.html:24
 msgid "Weekly volume (kg)"
 msgstr "الحجم الأسبوعي (كجم)"

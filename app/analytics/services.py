@@ -1,5 +1,5 @@
 """Analytics and improvement metrics (FREQ-9, FREQ-10, FREQ-12)."""
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.db.models import Avg, Count
 from django.utils import timezone
@@ -62,6 +62,51 @@ def weekly_volume(user, weeks=12):
         "volume": [item["volume"] for item in ordered],
         "sets": [item["sets"] for item in ordered],
         "rows": ordered,
+    }
+
+
+def workout_activity(user, weeks=12):
+    """Completed workout days grouped by local calendar week and day."""
+    today = timezone.localdate()
+    current_monday = today - timedelta(days=today.weekday())
+    first_monday = current_monday - timedelta(weeks=weeks - 1)
+    next_monday = current_monday + timedelta(weeks=1)
+    current_timezone = timezone.get_current_timezone()
+    start = timezone.make_aware(datetime.combine(first_monday, time.min), current_timezone)
+    end = timezone.make_aware(datetime.combine(next_monday, time.min), current_timezone)
+
+    activity_by_week = {}
+    for week_number in range(weeks):
+        monday = first_monday + timedelta(weeks=week_number)
+        activity_by_week[monday] = {}
+
+    sessions = WorkoutSession.objects.filter(
+        user=user,
+        ended_at__isnull=False,
+        started_at__gte=start,
+        started_at__lt=end,
+    ).values_list("started_at", flat=True)
+    for started_at in sessions:
+        local_date = timezone.localtime(started_at).date()
+        monday = local_date - timedelta(days=local_date.weekday())
+        daily_activity = activity_by_week[monday]
+        daily_activity[local_date] = daily_activity.get(local_date, 0) + 1
+
+    chart_weeks = []
+    for monday, daily_activity in activity_by_week.items():
+        days = [monday + timedelta(days=day) for day in range(7)]
+        chart_weeks.append({
+            "start": monday.isoformat(),
+            "end": days[-1].isoformat(),
+            "count": len(daily_activity),
+            "days": [day.isoformat() for day in days],
+            "daily": [daily_activity.get(day, 0) for day in days],
+        })
+
+    return {
+        "current_week": current_monday.isoformat(),
+        "has_activity": any(week["count"] for week in chart_weeks),
+        "weeks": chart_weeks,
     }
 
 

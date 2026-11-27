@@ -19,36 +19,29 @@
 </div>
 
 <div class="card">
-  <h3>{% trans "Weekly training volume" %}</h3>
-  <canvas id="volume-chart" class="chart" data-data='{{ chart_json }}'
-          data-label="{% trans "Weekly volume (kg)" %}"
-          data-y-title="{% trans "Volume (kg)" %}"
-          data-empty="{% trans "Log at least one completed set to see your progress chart." %}"
-          data-no-chart="{% trans "Chart library is unavailable, but the numbers are shown in the table." %}"
-          height="120"></canvas>
-
-  {% if chart.labels %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{% trans "Week" %}</th>
-            <th>{% trans "Volume (kg)" %}</th>
-            <th>{% trans "Sets" %}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in chart.rows %}
-            <tr>
-              <td>{{ row.label }}</td>
-              <td>{{ row.volume }}</td>
-              <td>{{ row.sets }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <h3>{% trans "Workout activity" %}</h3>
+  <div class="activity-controls">
+    <div class="activity-mode-toggle" role="group" aria-label="{% trans 'Activity view' %}">
+      <button type="button" data-activity-mode="weekly" aria-pressed="true">{% trans "Weekly" %}</button>
+      <button type="button" data-activity-mode="daily" aria-pressed="false">{% trans "Daily" %}</button>
     </div>
-  {% endif %}
+    <div class="activity-week-picker" hidden>
+      <label for="activity-week">{% trans "Week" %}</label>
+      <select id="activity-week" aria-label="{% trans 'Select week' %}"></select>
+    </div>
+  </div>
+  <p id="activity-empty-message" class="empty" {% if activity.has_activity %}hidden{% endif %}>
+    {% trans "No completed workouts in this week." %}
+  </p>
+  <div class="activity-chart-wrap">
+    <canvas id="activity-chart" class="chart"
+            data-week-label="{% trans 'Active workout days' %}"
+            data-daily-label="{% trans 'Completed workouts' %}"
+            data-week-y-title="{% trans 'Workout days' %}"
+            data-daily-y-title="{% trans 'Completed workouts' %}"
+            data-no-chart="{% trans 'Chart library is unavailable, so activity cannot be displayed.' %}"></canvas>
+  </div>
+  {{ activity|json_script:"activity-chart-data" }}
 </div>
 
 <div class="card">
