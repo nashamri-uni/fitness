@@ -423,6 +423,18 @@ msgstr "تفضيلات اللياقة"
 msgid "Save changes"
 msgstr "حفظ التغييرات"
 
+#: accounts/models.py
+msgid "Weekly workout goal (days)"
+msgstr "الهدف الأسبوعي للتمرين (أيام)"
+
+#: accounts/forms.py
+msgid "No goal set"
+msgstr "لم يتم تحديد هدف"
+
+#: accounts/models.py
+msgid "Effective at"
+msgstr "تاريخ السريان"
+
 #: templates/accounts/register.html:4 templates/accounts/register.html:13
 #: templates/base.html:54
 msgid "Register"
@@ -439,6 +451,110 @@ msgstr "لوحة التحكم"
 #: templates/analytics/dashboard.html:8
 msgid "Analytics dashboard"
 msgstr "لوحة التحليلات"
+
+#: templates/analytics/dashboard.html
+msgid "Your training overview and weekly goals."
+msgstr "نظرة موجزة على تدريبك وأهدافك الأسبوعية."
+
+#: templates/analytics/dashboard.html
+msgid "Total Sessions"
+msgstr "إجمالي الجلسات"
+
+#: templates/analytics/dashboard.html
+msgid "Completed workout sessions"
+msgstr "جلسات التمرين المكتملة"
+
+#: templates/analytics/dashboard.html
+msgid "Sessions This Week"
+msgstr "الجلسات هذا الأسبوع"
+
+#: templates/analytics/dashboard.html
+msgid "Completed sessions in the current week"
+msgstr "الجلسات المكتملة خلال الأسبوع الحالي"
+
+#: templates/analytics/dashboard.html
+msgid "My Workout Plans"
+msgstr "خطط تماريني"
+
+#: templates/analytics/dashboard.html
+msgid "Plans you own"
+msgstr "الخطط التي تملكها"
+
+#: templates/analytics/dashboard.html
+msgid "Weekly Goal Progress"
+msgstr "التقدم نحو الهدف الأسبوعي"
+
+#: templates/analytics/dashboard.html
+msgid "Weekly goal progress: %(percent)s%%"
+msgstr "التقدم نحو الهدف الأسبوعي: %(percent)s%%"
+
+#: templates/analytics/dashboard.html
+msgid "No weekly goal configured"
+msgstr "لم يتم تحديد هدف أسبوعي"
+
+#: templates/analytics/dashboard.html
+msgid "days this week"
+msgstr "أيام هذا الأسبوع"
+
+#: templates/analytics/dashboard.html
+msgid "Close details"
+msgstr "إغلاق التفاصيل"
+
+#: templates/analytics/dashboard.html
+msgid "Completed"
+msgstr "مكتملة"
+
+#: templates/analytics/dashboard.html
+msgid "In progress"
+msgstr "قيد التنفيذ"
+
+#: templates/analytics/dashboard.html
+msgid "No workout plans yet."
+msgstr "لا توجد خطط تمارين بعد."
+
+#: templates/analytics/dashboard.html
+msgid "Completed training days"
+msgstr "أيام التمرين المكتملة"
+
+#: templates/analytics/dashboard.html
+msgid "Weekly target"
+msgstr "الهدف الأسبوعي"
+
+#: templates/analytics/dashboard.html
+msgid "Only unique days with completed workouts count toward your goal."
+msgstr "يُحتسب كل يوم تمرين مكتمل مرة واحدة ضمن هدفك."
+
+#: templates/analytics/dashboard.html
+msgid "Set or update your weekly goal"
+msgstr "تعيين هدفك الأسبوعي أو تحديثه"
+
+#: templates/analytics/dashboard.html
+msgid "Exercise improvement"
+msgstr "تحسّن الأداء حسب التمرين"
+
+#: templates/analytics/dashboard.html
+msgid "reps"
+msgstr "تكرارات"
+
+#: templates/analytics/dashboard.html
+msgid "A week counts toward your streak after at least one completed workout."
+msgstr "يُحتسب الأسبوع في التتابع بعد إكمال تمرين واحد على الأقل."
+
+#: templates/analytics/dashboard.html
+msgid "No active training streak yet."
+msgstr "لا يوجد تتابع تدريبي نشط بعد."
+
+#: templates/analytics/dashboard.html
+msgid "Recent weekly activity"
+msgstr "النشاط الأسبوعي الأخير"
+
+#: templates/analytics/dashboard.html
+msgid "active days"
+msgstr "أيام نشطة"
+
+#: templates/analytics/dashboard.html
+msgid "Set a weekly goal"
+msgstr "حدد هدفًا أسبوعيًا"
 
 #: templates/analytics/dashboard.html:10 templates/base.html:22
 msgid "Sessions"
@@ -473,6 +589,18 @@ msgstr "متوسط الجهد"
 #: templates/workouts/records.html:8
 msgid "Personal records"
 msgstr "الأرقام الشخصية"
+
+#: templates/analytics/dashboard.html
+msgid "Records earned"
+msgstr "الأرقام القياسية المحققة"
+
+#: templates/analytics/dashboard.html
+msgid "Weekly Training Streak"
+msgstr "تتابع التدريب الأسبوعي"
+
+#: templates/analytics/dashboard.html
+msgid "Consecutive active weeks"
+msgstr "أسابيع متتالية من النشاط"
 
 #: templates/analytics/dashboard.html:17
 msgid "Weekly streak"
