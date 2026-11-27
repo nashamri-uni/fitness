@@ -1,10 +1,15 @@
 """Tests for workout plans (FREQ-4 to FREQ-7)."""
-from django.test import TestCase
+import json
+
+from django.test import Client, TestCase
+from django.test import TransactionTestCase
 from django.urls import reverse
+from django.db import connection
+from django.db.migrations.executor import MigrationExecutor
 
 from accounts.models import User
 from exercises.management.commands.seed_data import EXERCISE_IMAGES
-from exercises.models import Exercise, ExerciseMuscleGroup, MuscleGroup
+from exercises.models import Equipment, Exercise, ExerciseEquipment, ExerciseMuscleGroup, MuscleGroup
 from .forms import AddExerciseForm
 
 from .models import PlanExercise, PlanSet, WorkoutPlan
@@ -24,6 +29,13 @@ class PlanTests(TestCase):
 
     def create_plan(self):
         return WorkoutPlan.objects.create(user=self.user, name="Push Day", goal="hypertrophy")
+
+    def save_builder(self, program, payload):
+        return self.client.post(
+            reverse("plans:save_program", args=[program.pk]),
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
 
     def test_plan_list_search_matches_english_and_arabic_names_for_current_user(self):
         self.create_plan()
@@ -52,10 +64,10 @@ class PlanTests(TestCase):
         response = self.client.get(reverse("plans:list"), {"q": "Cardio"})
 
         self.assertEqual(response.context["plans"].count(), 0)
-        self.assertContains(response, "No workout plans match your search.")
+        self.assertContains(response, "No programs found")
         self.assertContains(response, 'href="%s"' % reverse("plans:list"))
         self.assertContains(response, "Clear search")
-        self.assertNotContains(response, "You have no plans yet.")
+        self.assertNotContains(response, "You have no workout programs yet.")
 
     def test_plan_list_search_controls_are_translated_into_arabic(self):
         self.create_plan()
@@ -63,18 +75,387 @@ class PlanTests(TestCase):
 
         response = self.client.get(reverse("plans:list"), {"q": "غير موجود"})
 
-        self.assertContains(response, "اسم الخطة")
+        self.assertContains(response, "ابحث في البرامج وأيام التدريب")
         self.assertContains(response, "مسح البحث")
-        self.assertContains(response, "لا توجد خطط تدريب تطابق بحثك.")
+        self.assertContains(response, "لم يتم العثور على برامج")
+
+    def test_program_list_shows_program_stats_and_add_day_starts_a_new_draft(self):
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+
+        response = self.client.get(reverse("plans:list"))
+
+        self.assertContains(response, "Edit program")
+        self.assertContains(response, "Add workout day")
+        self.assertContains(response, "?new_day=1")
+        self.assertEqual(response.context["programs"][0]["day_count"], 1)
+        self.assertEqual(response.context["programs"][0]["exercise_count"], 1)
+
+    def test_program_list_shows_named_delete_confirmation_in_english_and_arabic(self):
+        plan = self.create_plan()
+        plan.name = 'Upper "A" & <B>'
+        plan.save(update_fields=["name"])
+        delete_url = reverse("plans:delete", args=[plan.pk]) + "?from=programs"
+
+        english = self.client.get(reverse("plans:list"))
+        self.assertContains(english, f'href="{delete_url}"')
+        self.assertContains(english, 'data-confirm-delete="Delete “Upper &quot;A&quot; &amp; &lt;B&gt;”? Logged sessions are kept."')
+        self.assertContains(english, 'id="program-day-delete-dialog"')
+
+        self.client.post(reverse("set_language"), {"language": "ar", "next": "/"})
+        arabic = self.client.get(reverse("plans:list"))
+        self.assertContains(arabic, 'dir="rtl"')
+        self.assertContains(arabic, 'حذف اليوم')
+        self.assertContains(arabic, 'هل تريد حذف «Upper &quot;A&quot; &amp; &lt;B&gt;»؟')
+
+    def test_delete_day_from_program_list_requires_ownership_and_csrf(self):
+        plan = self.create_plan()
+        other_day = WorkoutPlan.objects.create(user=self.user, program=plan.program, name="Pull Day")
+        list_url = reverse("plans:list")
+        delete_url = reverse("plans:delete", args=[plan.pk]) + "?from=programs"
+        client = Client(enforce_csrf_checks=True)
+        client.force_login(self.other)
+        client.get(list_url)
+        token = client.cookies["csrftoken"].value
+        self.assertEqual(client.post(delete_url, {"csrfmiddlewaretoken": token}).status_code, 404)
+
+        client.force_login(self.user)
+        confirmation = client.get(delete_url)
+        self.assertContains(confirmation, plan.name)
+        self.assertContains(confirmation, f'<a class="btn btn-secondary" href="{list_url}">Cancel</a>', html=True)
+        self.assertEqual(client.post(delete_url).status_code, 403)
+        self.assertTrue(WorkoutPlan.objects.filter(pk=plan.pk).exists())
+
+        token = client.cookies["csrftoken"].value
+        response = client.post(delete_url, {"csrfmiddlewaretoken": token})
+        self.assertRedirects(response, list_url)
+        self.assertFalse(WorkoutPlan.objects.filter(pk=plan.pk).exists())
+        self.assertTrue(WorkoutPlan.objects.filter(pk=other_day.pk).exists())
+
+    def test_delete_day_from_program_list_preserves_training_history_and_analytics(self):
+        from analytics.services import exercise_progress, summary, weekly_volume
+        from workouts.services import evaluate_personal_record, finish_session, start_session
+
+        plan = self.create_plan()
+        entry = PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+        planned_set = PlanSet.objects.create(plan_exercise=entry)
+        session = start_session(self.user, plan)
+        session_exercise = session.exercises.get()
+        logged_set = session_exercise.sets.create(reps_completed=8, weight_kg=40)
+        evaluate_personal_record(logged_set)
+        finish_session(session, notes="Workout completed", rating=4)
+        analytics_before = (summary(self.user), weekly_volume(self.user), exercise_progress(self.user))
+        record_ids = list(logged_set.records.values_list("pk", flat=True))
+
+        response = self.client.post(reverse("plans:delete", args=[plan.pk]) + "?from=programs")
+
+        self.assertRedirects(response, reverse("plans:list"))
+        self.assertFalse(WorkoutPlan.objects.filter(pk=plan.pk).exists())
+        self.assertFalse(PlanSet.objects.filter(pk=planned_set.pk).exists())
+        session.refresh_from_db()
+        self.assertIsNone(session.plan_id)
+        self.assertEqual(session.name, plan.name)
+        self.assertEqual(session.notes, "Workout completed")
+        self.assertTrue(session.is_finished)
+        self.assertEqual(session.exercises.get().pk, session_exercise.pk)
+        logged_set.refresh_from_db()
+        self.assertTrue(logged_set.is_personal_record)
+        self.assertCountEqual(logged_set.records.values_list("pk", flat=True), record_ids)
+        stats_before, volume_before, progress_before = analytics_before
+        stats_after = summary(self.user)
+        self.assertEqual(stats_after.pop("workout_plans"), stats_before.pop("workout_plans") - 1)
+        self.assertEqual(stats_after, stats_before)
+        self.assertEqual(weekly_volume(self.user), volume_before)
+        self.assertEqual(exercise_progress(self.user), progress_before)
+
+    def test_program_list_uses_arabic_singular_counts(self):
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+        self.client.post(reverse("set_language"), {"language": "ar", "next": "/"})
+
+        response = self.client.get(reverse("plans:list"))
+
+        self.assertContains(response, "1 يوم تدريب")
+        self.assertContains(response, "1 تمرين")
+
+    def test_program_builder_renders_existing_day_or_new_draft_without_redirecting(self):
+        plan = self.create_plan()
+        builder_url = reverse("plans:program_builder", args=[plan.program_id])
+
+        existing_response = self.client.get(builder_url)
+        new_day_response = self.client.get(builder_url, {"new_day": "1"})
+
+        self.assertEqual(existing_response.status_code, 200)
+        self.assertEqual(existing_response.context["selected_plan_id"], plan.pk)
+        self.assertFalse(existing_response.context["start_new_day"])
+        self.assertEqual(new_day_response.status_code, 200)
+        self.assertEqual(new_day_response.context["selected_plan_id"], "")
+        self.assertTrue(new_day_response.context["start_new_day"])
+
+    def test_builder_includes_lazy_local_animation_and_exercise_details(self):
+        plan = self.create_plan()
+        chest = MuscleGroup.objects.create(name="Chest", body_region=MuscleGroup.BodyRegion.UPPER)
+        equipment = Equipment.objects.create(name="Bench")
+        ExerciseMuscleGroup.objects.create(
+            exercise=self.exercise,
+            muscle_group=chest,
+            role=ExerciseMuscleGroup.Role.PRIMARY,
+        )
+        ExerciseEquipment.objects.create(exercise=self.exercise, equipment=equipment)
+        self.exercise.description = "A compound movement."
+        self.exercise.instructions = "Lower the bar with control."
+        self.exercise.save()
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+        library_item = next(
+            item for item in response.context["builder_data"]["exercises"]
+            if item["id"] == self.exercise.pk
+        )
+
+        self.assertTrue(library_item["animation"].endswith(".gif"))
+        self.assertTrue(library_item["thumbnail"].endswith(".webp"))
+        self.assertEqual(library_item["description"], "A compound movement.")
+        self.assertEqual(library_item["instructions"], "Lower the bar with control.")
+        self.assertEqual(library_item["muscles"], [{"name": "Chest", "role": "primary"}])
+        self.assertEqual(library_item["equipment"], ["Bench"])
 
     def test_create_plan(self):
         response = self.client.post(
             reverse("plans:create"),
-            {"name": "Push Day", "description": "", "goal": "hypertrophy", "estimated_duration_minutes": 40},
+            {
+                "program_name": "Push Program",
+                "name": "Push Day",
+                "description": "",
+                "estimated_duration_minutes": 40,
+            },
         )
         plan = WorkoutPlan.objects.get(name="Push Day")
         self.assertRedirects(response, reverse("plans:detail", args=[plan.pk]))
         self.assertEqual(plan.user, self.user)
+        self.assertEqual(plan.program.name, "Push Program")
+        self.assertEqual(plan.program_order, 1)
+
+    def test_create_program_form_does_not_require_a_training_split(self):
+        response = self.client.get(reverse("plans:create"))
+
+        self.assertContains(response, 'name="program_name"')
+        self.assertContains(response, 'name="name"')
+        self.assertNotContains(response, 'name="goal"')
+
+    def test_builder_saves_multiple_days_exercises_custom_sets_and_zero_rest(self):
+        plan = self.create_plan()
+        resistance = Exercise.objects.create(name="Bench Press")
+        payload = {
+            "name": "Custom program",
+            "days": [
+                {
+                    "id": plan.pk,
+                    "client_key": f"day-{plan.pk}",
+                    "name": "Upper body",
+                    "description": "First saved day",
+                    "estimated_duration_minutes": 55,
+                    "exercises": [
+                        {
+                            "exercise_id": self.exercise.pk,
+                            "rest_seconds": 0,
+                            "notes": "Keep the reps controlled.",
+                            "sets": [
+                                {"id": None, "reps": 12, "duration_seconds": 0, "weight_kg": 0, "set_type": "normal"},
+                                {"id": None, "reps": 10, "duration_seconds": 0, "weight_kg": 0, "set_type": "warmup"},
+                                {"id": None, "reps": 8, "duration_seconds": 0, "weight_kg": 0, "set_type": "failure"},
+                            ],
+                        },
+                        {
+                            "exercise_id": resistance.pk,
+                            "rest_seconds": 90,
+                            "notes": "",
+                            "sets": [
+                                {"id": None, "reps": 8, "duration_seconds": 0, "weight_kg": 40, "set_type": "drop_set"},
+                            ],
+                        },
+                    ],
+                },
+                {
+                    "id": None,
+                    "client_key": "new-day",
+                    "name": "Cardio finish",
+                    "description": "",
+                    "estimated_duration_minutes": 25,
+                    "exercises": [],
+                },
+            ],
+        }
+
+        response = self.save_builder(plan.program, payload)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        plan.refresh_from_db()
+        plan.program.refresh_from_db()
+        self.assertEqual(plan.program.name, "Custom program")
+        self.assertEqual(plan.name, "Upper body")
+        self.assertEqual(plan.program_order, 1)
+        self.assertEqual(plan.exercises.count(), 2)
+        bodyweight_entry = plan.exercises.get(exercise=self.exercise)
+        self.assertEqual(bodyweight_entry.rest_seconds, 0)
+        self.assertEqual(bodyweight_entry.notes, "Keep the reps controlled.")
+        self.assertEqual(
+            list(bodyweight_entry.sets.values_list("set_number", "reps", "set_type")),
+            [(1, 12, "normal"), (2, 10, "warmup"), (3, 8, "failure")],
+        )
+        resistance_entry = plan.exercises.get(exercise=resistance)
+        self.assertEqual(resistance_entry.sets.get().weight_kg, 40)
+        new_day = plan.program.days.get(program_order=2)
+        self.assertEqual(new_day.name, "Cardio finish")
+        self.assertEqual(response.json()["days"]["new-day"], new_day.pk)
+
+    def test_builder_preserves_customized_existing_sets_when_saving(self):
+        plan = self.create_plan()
+        entry = PlanExercise.objects.create(plan=plan, exercise=self.exercise, order=1, rest_seconds=0)
+        set_obj = PlanSet.objects.create(
+            plan_exercise=entry,
+            set_number=4,
+            reps=7,
+            duration_seconds=20,
+            weight_kg=17.5,
+            set_type=PlanSet.SetType.DROP_SET,
+        )
+
+        response = self.save_builder(
+            plan.program,
+            {
+                "name": plan.program.name,
+                "days": [
+                    {
+                        "id": plan.pk,
+                        "client_key": f"day-{plan.pk}",
+                        "name": plan.name,
+                        "description": "",
+                        "estimated_duration_minutes": plan.estimated_duration_minutes,
+                        "exercises": [
+                            {
+                                "exercise_id": self.exercise.pk,
+                                "rest_seconds": 0,
+                                "notes": "",
+                                "sets": [
+                                    {
+                                        "id": set_obj.pk,
+                                        "reps": 7,
+                                        "duration_seconds": 20,
+                                        "weight_kg": 17.5,
+                                        "set_type": "drop_set",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, response.content)
+        set_obj.refresh_from_db()
+        self.assertEqual(set_obj.pk, response.json()["records"][f"day-{plan.pk}"]["exercises"][str(self.exercise.pk)]["sets"][0])
+        self.assertEqual((set_obj.set_number, set_obj.reps, set_obj.duration_seconds, set_obj.weight_kg, set_obj.set_type), (1, 7, 20, 17.5, "drop_set"))
+
+    def test_invalid_builder_payload_rolls_back_all_program_changes(self):
+        plan = self.create_plan()
+        response = self.save_builder(
+            plan.program,
+            {
+                "name": "Should not persist",
+                "days": [
+                    {
+                        "id": plan.pk,
+                        "client_key": f"day-{plan.pk}",
+                        "name": "Changed day",
+                        "description": "",
+                        "estimated_duration_minutes": 45,
+                        "exercises": [
+                            {
+                                "exercise_id": self.exercise.pk,
+                                "rest_seconds": 90,
+                                "notes": "",
+                                "sets": [],
+                            },
+                            {
+                                "exercise_id": self.exercise.pk,
+                                "rest_seconds": 90,
+                                "notes": "",
+                                "sets": [],
+                            },
+                        ],
+                    }
+                ],
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        plan.refresh_from_db()
+        plan.program.refresh_from_db()
+        self.assertEqual(plan.name, "Push Day")
+        self.assertEqual(plan.program.name, "My Program")
+
+    def test_builder_rejects_programs_owned_by_another_user(self):
+        plan = self.create_plan()
+        self.client.login(username="other", password="pw12345678")
+
+        response = self.save_builder(plan.program, {"name": "No access", "days": []})
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_saved_builder_day_can_start_a_session(self):
+        from workouts.models import SessionExercise, WorkoutSession
+
+        plan = self.create_plan()
+        response = self.save_builder(
+            plan.program,
+            {
+                "name": plan.program.name,
+                "days": [
+                    {
+                        "id": plan.pk,
+                        "client_key": f"day-{plan.pk}",
+                        "name": plan.name,
+                        "description": "",
+                        "estimated_duration_minutes": 45,
+                        "exercises": [
+                            {
+                                "exercise_id": self.exercise.pk,
+                                "rest_seconds": 90,
+                                "notes": "",
+                                "sets": [
+                                    {"id": None, "reps": 10, "duration_seconds": 0, "weight_kg": 0, "set_type": "normal"},
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        start_response = self.client.post(reverse("workouts:start", args=[plan.pk]))
+        session = WorkoutSession.objects.get(plan=plan)
+
+        self.assertRedirects(start_response, reverse("workouts:active", args=[session.pk]))
+        self.assertEqual(SessionExercise.objects.filter(session=session, exercise=self.exercise).count(), 1)
+
+    def test_removing_a_saved_day_keeps_session_history(self):
+        from workouts.models import SessionExercise, WorkoutSession
+
+        plan = self.create_plan()
+        PlanExercise.objects.create(plan=plan, exercise=self.exercise, order=1)
+        self.client.post(reverse("workouts:start", args=[plan.pk]))
+        session = WorkoutSession.objects.get(plan=plan)
+        saved_session_exercise_id = session.exercises.get().pk
+
+        response = self.save_builder(plan.program, {"name": plan.program.name, "days": []})
+
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertFalse(WorkoutPlan.objects.filter(pk=plan.pk).exists())
+        session.refresh_from_db()
+        self.assertIsNone(session.plan_id)
+        self.assertTrue(SessionExercise.objects.filter(pk=saved_session_exercise_id, session=session).exists())
 
     def test_add_exercise_to_plan(self):
         plan = self.create_plan()
@@ -210,10 +591,11 @@ class PlanTests(TestCase):
             ["Plank", "Unmapped Exercise"],
         )
         self.assertEqual(other["groups"], [])
-        self.assertContains(response, 'id="id_exercise_%s"' % core_primary.pk)
-        self.assertContains(response, 'id="id_exercise_%s"' % unlinked.pk)
-        self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
-        self.assertContains(response, 'class="exercise-thumbnail exercise-thumbnail--picker"')
+        builder_exercises = response.context["builder_data"]["exercises"]
+        self.assertIn(core_primary.pk, {item["id"] for item in builder_exercises})
+        self.assertIn(unlinked.pk, {item["id"] for item in builder_exercises})
+        self.assertIn(self.exercise.local_thumbnail_url, response.content.decode())
+        self.assertContains(response, 'class="builder-library-list"')
 
     def test_selected_plan_exercise_uses_a_static_thumbnail(self):
         plan = self.create_plan()
@@ -221,9 +603,37 @@ class PlanTests(TestCase):
 
         response = self.client.get(reverse("plans:detail", args=[plan.pk]))
 
-        self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
-        self.assertContains(response, 'class="exercise-thumbnail exercise-thumbnail--selected"')
-        self.assertNotContains(response, f'src="{self.exercise.local_image_url}"')
+        exercise_data = response.context["builder_data"]["days"][0]["exercises"][0]
+        self.assertEqual(exercise_data["thumbnail"], self.exercise.local_thumbnail_url)
+        self.assertNotEqual(exercise_data["thumbnail"], self.exercise.local_image_url)
+
+    def test_inactive_saved_exercise_remains_editable_outside_the_catalog(self):
+        plan = self.create_plan()
+        entry = PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+        saved_set = PlanSet.objects.create(plan_exercise=entry, reps=8)
+        self.exercise.is_active = False
+        self.exercise.save(update_fields=["is_active"])
+
+        response = self.client.get(reverse("plans:detail", args=[plan.pk]))
+        data = response.context["builder_data"]
+        self.assertNotIn(self.exercise.pk, {item["id"] for item in data["exercises"]})
+        self.assertEqual(data["retired_exercises"][0]["id"], self.exercise.pk)
+        self.assertEqual(data["retired_exercises"][0]["animation"], self.exercise.local_image_url)
+        day = data["days"][0]
+        day["client_key"] = "saved-day"
+        day["exercises"][0]["sets"][0]["reps"] = 12
+        payload = {"name": plan.program.name, "days": [day]}
+
+        response = self.save_builder(plan.program, payload)
+        self.assertEqual(response.status_code, 200, response.content)
+        saved_set.refresh_from_db()
+        self.assertEqual(saved_set.reps, 12)
+
+        day["exercises"][0]["removed_set_ids"] = [saved_set.pk]
+        response = self.save_builder(plan.program, payload)
+        self.assertEqual(response.status_code, 400, response.content)
+        saved_set.refresh_from_db()
+        self.assertEqual(saved_set.reps, 12)
 
     def test_already_added_exercise_is_not_offered_again(self):
         plan = self.create_plan()
@@ -231,11 +641,12 @@ class PlanTests(TestCase):
 
         response = self.client.get(reverse("plans:detail", args=[plan.pk]))
 
-        self.assertNotContains(response, 'id="id_exercise_%s"' % self.exercise.pk)
-        self.assertContains(response, "No exercises are available to add.")
-        self.assertContains(response, "name=\"order\"")
-        self.assertContains(response, "name=\"rest_seconds\"")
-        self.assertContains(response, "disabled")
+        self.assertContains(response, '"exercise_id": %s' % self.exercise.pk)
+        self.assertContains(response, 'data-added="Added"')
+        self.assertNotIn(
+            self.exercise.pk,
+            AddExerciseForm(plan=plan).fields["exercise"].queryset.values_list("pk", flat=True),
+        )
 
     def test_invalid_duplicate_submission_keeps_form_validation(self):
         plan = self.create_plan()
@@ -260,12 +671,12 @@ class PlanTests(TestCase):
         self.client.post(reverse("set_language"), {"language": "ar", "next": "/"})
         response = self.client.get(reverse("plans:detail", args=[plan.pk]))
 
-        self.assertContains(response, "الجزء العلوي")
-        self.assertContains(response, "الصدر")
-        self.assertContains(response, "تمرين الضغط")
-        self.assertContains(response, "<legend id=\"exercise-field-label\">التمرين</legend>")
-        self.assertContains(response, '<label for="id_order">الترتيب</label>')
-        self.assertContains(response, '<label for="id_rest_seconds">ثوانٍ الراحة</label>')
+        self.assertEqual(response.context["builder_data"]["exercises"][0]["category"], "الجزء العلوي")
+        self.assertEqual(response.context["builder_data"]["exercises"][0]["group"], "الصدر")
+        self.assertEqual(response.context["builder_data"]["exercises"][0]["name"], "تمرين الضغط")
+        self.assertContains(response, "ابحث عن تمارين بالإنجليزية أو العربية")
+        self.assertNotContains(response, 'name="order"')
+        self.assertNotContains(response, 'name="set_number"')
         self.assertContains(response, 'dir="rtl"')
 
     def test_add_set_to_plan_exercise(self):
@@ -305,3 +716,58 @@ class PlanTests(TestCase):
         self.client.login(username="other", password="pw12345678")
         response = self.client.get(reverse("plans:detail", args=[plan.pk]))
         self.assertEqual(response.status_code, 404)
+
+
+class WorkoutProgramMigrationTests(TransactionTestCase):
+    migrate_from = [("plans", "0001_initial")]
+    migrate_to = [("plans", "0002_workoutprogram_and_day_order")]
+
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_existing_plan_and_sets_are_preserved_and_grouped(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_from)
+        old_apps = executor.loader.project_state(self.migrate_from).apps
+        User = old_apps.get_model("accounts", "User")
+        Exercise = old_apps.get_model("exercises", "Exercise")
+        WorkoutPlan = old_apps.get_model("plans", "WorkoutPlan")
+        PlanExercise = old_apps.get_model("plans", "PlanExercise")
+        PlanSet = old_apps.get_model("plans", "PlanSet")
+
+        user = User.objects.create(username="legacy-migration-user", password="not-used")
+        exercise = Exercise.objects.create(name="Legacy Press")
+        plan = WorkoutPlan.objects.create(user=user, name="Legacy Workout", goal="strength")
+        plan_exercise = PlanExercise.objects.create(
+            plan=plan,
+            exercise=exercise,
+            order=3,
+            rest_seconds=0,
+        )
+        planned_set = PlanSet.objects.create(
+            plan_exercise=plan_exercise,
+            set_number=2,
+            reps=8,
+            weight_kg=25,
+        )
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(self.migrate_to)
+        new_apps = executor.loader.project_state(self.migrate_to).apps
+        NewWorkoutPlan = new_apps.get_model("plans", "WorkoutPlan")
+        NewWorkoutProgram = new_apps.get_model("plans", "WorkoutProgram")
+        NewPlanExercise = new_apps.get_model("plans", "PlanExercise")
+        NewPlanSet = new_apps.get_model("plans", "PlanSet")
+        saved_plan = NewWorkoutPlan.objects.get(pk=plan.pk)
+
+        self.assertEqual(saved_plan.program.user_id, user.pk)
+        self.assertEqual(saved_plan.program.name, "My Program")
+        self.assertEqual(saved_plan.program_order, 1)
+        self.assertEqual(saved_plan.name, "Legacy Workout")
+        saved_entry = NewPlanExercise.objects.get(pk=plan_exercise.pk)
+        self.assertEqual((saved_entry.exercise_id, saved_entry.rest_seconds), (exercise.pk, 0))
+        saved_set = NewPlanSet.objects.get(pk=planned_set.pk)
+        self.assertEqual((saved_set.set_number, saved_set.reps, saved_set.weight_kg), (2, 8, 25))
+        self.assertEqual(NewWorkoutProgram.objects.count(), 1)

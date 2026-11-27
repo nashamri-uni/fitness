@@ -31,3 +31,7 @@
 [dir="rtl"] .language-switcher select {
   width: auto;
 }
+
+[dir="rtl"] .builder-back > span:first-child {
+  transform: scaleX(-1);
+}

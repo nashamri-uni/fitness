@@ -1,64 +1,138 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{% trans "My plans" %} &middot; FitPlanner{% endblock %}
+{% block title %}{% trans "My programs" %} &middot; FitPlanner{% endblock %}
 
 {% block content %}
-<div class="card">
-  <h2>{% trans "My workout plans" %}</h2>
-  <p><a class="btn" href="{% url 'plans:create' %}">{% trans "Create new plan" %}</a></p>
-
-  <form method="get" class="plan-search">
+<section class="programs-page">
+  <header class="programs-page-heading">
     <div>
-      <label for="plan-search">{% trans "Plan name" %}</label>
-      <input type="text" id="plan-search" name="q" value="{{ search_query }}" placeholder="{% trans 'Plan name' %}">
+      <p class="product-eyebrow">{% trans "TRAINING LIBRARY" %}</p>
+      <h1>{% trans "My workout programs" %}</h1>
+      <p class="muted">{% trans "Build a routine that fits your week. Add days whenever you need them." %}</p>
     </div>
-    <div class="plan-search-actions">
-      <button type="submit">{% trans "Search" %}</button>
-      <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Clear search" %}</a>
-    </div>
+    <a class="btn programs-create" href="{% url 'plans:create' %}">
+      <span aria-hidden="true">+</span> {% trans "Create program" %}
+    </a>
+  </header>
+
+  <form method="get" class="program-search">
+    <label class="sr-only" for="plan-search">{% trans "Search programs and workout days" %}</label>
+    <span class="program-search-icon" aria-hidden="true">⌕</span>
+    <input type="search" id="plan-search" name="q" value="{{ search_query }}" placeholder="{% trans 'Search programs and workout days' %}">
+    {% if search_query %}
+      <a class="program-search-clear" href="{% url 'plans:list' %}" aria-label="{% trans 'Clear search' %}">&times;</a>
+    {% endif %}
+    <button type="submit">{% trans "Search" %}</button>
   </form>
 
-  {% if plans %}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>{% trans "Name" %}</th>
-            <th>{% trans "Goal" %}</th>
-            <th>{% trans "Exercises" %}</th>
-            <th>{% trans "Sets" %}</th>
-            <th>{% trans "Est. duration" %}</th>
-            <th>{% trans "Created" %}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for plan in plans %}
-            <tr>
-              <td><a href="{% url 'plans:detail' plan.pk %}">{{ plan.name }}</a></td>
-              <td>{{ plan.get_goal_display }}</td>
-              <td>{{ plan.exercises.count }}</td>
-              <td>{{ plan.total_sets }}</td>
-              <td>{{ plan.estimated_duration_minutes }} {% trans "min" %}</td>
-              <td>{{ plan.created_at|date:"Y-m-d" }}</td>
-              <td>
+  <div class="program-card-grid">
+  {% for program_row in programs %}
+    {% with program=program_row.program %}
+    <article class="program-card">
+      <header class="program-card-heading">
+        <div class="program-card-title">
+          <span class="program-mark" aria-hidden="true">✦</span>
+          <div>
+            <p class="product-eyebrow">{% trans "WORKOUT PROGRAM" %}</p>
+            <h2>{{ program.name }}</h2>
+          </div>
+        </div>
+        <div class="program-card-actions">
+          <a class="btn btn-secondary program-edit-link" href="{% url 'plans:program_builder' program.pk %}">
+            <span aria-hidden="true">↗</span> {% trans "Edit program" %}
+          </a>
+          <a class="btn program-add-link" href="{% url 'plans:program_builder' program.pk %}?new_day=1">
+            <span aria-hidden="true">+</span> {% trans "Add workout day" %}
+          </a>
+        </div>
+      </header>
+
+      <div class="program-stats" aria-label="{% trans 'Program overview' %}">
+        <span>{% blocktrans count day_count=program_row.day_count %}{{ day_count }} workout day{% plural %}{{ day_count }} workout days{% endblocktrans %}</span>
+        <span>{% blocktrans count exercise_count=program_row.exercise_count %}{{ exercise_count }} exercise{% plural %}{{ exercise_count }} exercises{% endblocktrans %}</span>
+        <span><strong>{{ program_row.estimated_minutes }}</strong> {% trans "Minutes planned" %}</span>
+      </div>
+
+      <div class="program-day-list">
+        {% for plan in program_row.days %}
+          <article class="program-day-row">
+            <div class="program-day-main">
+              <span class="program-day-number" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span>
+              <div class="program-day-copy">
+                <a class="program-day-name" id="program-day-name-{{ plan.pk }}" href="{% url 'plans:detail' plan.pk %}">{{ plan.name }}</a>
+                <p class="muted">
+                  {% blocktrans count exercise_count=plan.exercise_count %}{{ exercise_count }} exercise{% plural %}{{ exercise_count }} exercises{% endblocktrans %}
+                  <span aria-hidden="true">·</span> {{ plan.estimated_duration_minutes }} {% trans "min" %}
+                </p>
+              </div>
+            </div>
+            <div class="program-day-actions">
+              {% if plan.exercise_count %}
                 <form method="post" action="{% url 'workouts:start' plan.pk %}" class="inline-form">
                   {% csrf_token %}
-                  <button type="submit">{% trans "Start session" %}</button>
+                  <button type="submit" class="program-start-button">{% trans "Start workout" %}</button>
                 </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
+              {% else %}
+                <a class="btn btn-secondary" href="{% url 'plans:detail' plan.pk %}">{% trans "Add exercises" %}</a>
+              {% endif %}
+              <a class="program-day-edit" href="{% url 'plans:detail' plan.pk %}" aria-label="{% blocktrans with name=plan.name %}Edit {{ name }}{% endblocktrans %}">
+                <span aria-hidden="true">↗</span>
+              </a>
+              <a class="program-day-delete" href="{% url 'plans:delete' plan.pk %}?from=programs"
+                 aria-label="{% trans 'Delete day' %}" aria-describedby="program-day-name-{{ plan.pk }}"
+                 title="{% trans 'Delete day' %}"
+                 data-confirm-delete="{% blocktrans with name=plan.name %}Delete “{{ name }}”? Logged sessions are kept.{% endblocktrans %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5m4-5v5"/>
+                </svg>
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="program-empty-days">
+            <span class="program-empty-icon" aria-hidden="true">＋</span>
+            <p>{% trans "This program has no workout days yet." %}</p>
+            <a href="{% url 'plans:program_builder' program.pk %}?new_day=1">{% trans "Add your first workout day" %}</a>
+          </div>
+        {% endfor %}
+      </div>
+    </article>
+    {% endwith %}
+  {% empty %}
     {% if search_query %}
-      <p class="empty">{% trans "No workout plans match your search." %}</p>
+      <div class="program-empty-state">
+        <span aria-hidden="true">⌕</span>
+        <h2>{% trans "No programs found" %}</h2>
+        <p class="muted">{% trans "Try another search, or clear the current filter." %}</p>
+        <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Clear search" %}</a>
+      </div>
     {% else %}
-      <p class="empty">{% trans "You have no plans yet. Create one and add exercises from the library." %}</p>
+      <div class="program-empty-state">
+        <span aria-hidden="true">✦</span>
+        <h2>{% trans "Your training starts here" %}</h2>
+        <p class="muted">{% trans "Create a program, then add the workout days you want to follow." %}</p>
+        <a class="btn" href="{% url 'plans:create' %}">{% trans "Create your first program" %}</a>
+      </div>
     {% endif %}
+  {% endfor %}
+  </div>
+
+  {% if programs %}
+    <dialog id="program-day-delete-dialog" aria-labelledby="program-day-delete-heading" aria-describedby="program-day-delete-message">
+      <h2 id="program-day-delete-heading">{% trans "Delete day" %}</h2>
+      <p id="program-day-delete-message"></p>
+      <form method="post" class="form-actions">
+        {% csrf_token %}
+        <button type="button" class="btn-secondary" data-cancel-delete autofocus>{% trans "Cancel" %}</button>
+        <button type="submit" class="btn-danger">{% trans "Yes, delete" %}</button>
+      </form>
+    </dialog>
   {% endif %}
-</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/program-list.js' %}" defer></script>
 {% endblock %}

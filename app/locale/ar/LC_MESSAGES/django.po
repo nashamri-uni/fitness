@@ -1294,3 +1294,438 @@ msgstr "اكتملت الجلسة '%(name)s'."
 msgid "Please correct the session details."
 msgstr "يرجى تصحيح بيانات الجلسة."
 
+msgid "Program name"
+msgstr "اسم البرنامج"
+
+msgid "My program"
+msgstr "برنامجي"
+
+msgid "First workout day"
+msgstr "اسم أول يوم تدريب"
+
+msgid "Create workout program"
+msgstr "إنشاء برنامج تدريبي"
+
+msgid "Workout program"
+msgstr "البرنامج التدريبي"
+
+msgid "workout program"
+msgstr "برنامج تدريبي"
+
+msgid "workout programs"
+msgstr "برامج تدريبية"
+
+msgid "Workout Builder"
+msgstr "منشئ التمارين"
+
+msgid "My programs"
+msgstr "برامجي"
+
+msgid "My workout programs"
+msgstr "برامج التدريب الخاصة بي"
+
+msgid "Create flexible workout days and arrange them your way."
+msgstr "أنشئ أيام تدريب مرنة ورتبها بالطريقة التي تناسبك."
+
+msgid "Create program"
+msgstr "إنشاء برنامج"
+
+msgid "Program or day name"
+msgstr "اسم البرنامج أو اليوم"
+
+msgid "No workout programs match your search."
+msgstr "لا توجد برامج تدريب تطابق بحثك."
+
+msgid "You have no workout programs yet. Create one to start building."
+msgstr "لا توجد لديك برامج تدريب بعد. أنشئ برنامجًا لبدء البناء."
+
+msgid "This program has no workout days yet."
+msgstr "لا يحتوي هذا البرنامج على أيام تدريب بعد."
+
+msgid "Open builder to add a day"
+msgstr "افتح المنشئ لإضافة يوم"
+
+msgid "Edit workout"
+msgstr "تحرير التدريب"
+
+msgid "Start"
+msgstr "بدء"
+
+msgid "Add exercises"
+msgstr "إضافة تمارين"
+
+msgid "All changes saved"
+msgstr "تم حفظ جميع التغييرات"
+
+msgid "Unsaved changes"
+msgstr "تغييرات غير محفوظة"
+
+msgid "Saving…"
+msgstr "جارٍ الحفظ…"
+
+msgid "Could not save your workout. Please try again."
+msgstr "تعذر حفظ التدريب. يرجى المحاولة مرة أخرى."
+
+msgid "Workout saved"
+msgstr "تم حفظ التدريب"
+
+msgid "Save workout"
+msgstr "حفظ التدريب"
+
+msgid "Number of sets"
+msgstr "عدد المجموعات"
+
+msgid "Intervals"
+msgstr "الفترات"
+
+msgid "+ Add day"
+msgstr "+ إضافة يوم"
+
+msgid "Day name"
+msgstr "اسم اليوم"
+
+msgid "Estimated minutes"
+msgstr "الدقائق المقدرة"
+
+msgid "Remove day"
+msgstr "حذف اليوم"
+
+msgid "Start with an exercise. Your day stays a draft until you save."
+msgstr "ابدأ بإضافة تمرين. سيبقى اليوم مسودة حتى تحفظه."
+
+msgid "Exercise library"
+msgstr "مكتبة التمارين"
+
+msgid "Choose one or more exercises to add."
+msgstr "اختر تمرينًا أو أكثر لإضافته."
+
+msgid "Close exercise library"
+msgstr "إغلاق مكتبة التمارين"
+
+msgid "Search exercises"
+msgstr "البحث عن تمارين"
+
+msgid "Search in English or Arabic"
+msgstr "ابحث بالإنجليزية أو العربية"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "All categories"
+msgstr "جميع الفئات"
+
+msgid "Add selected"
+msgstr "إضافة المحدد"
+
+msgid "Added"
+msgstr "مضاف"
+
+msgid "Move up"
+msgstr "تحريك للأعلى"
+
+msgid "Move down"
+msgstr "تحريك للأسفل"
+
+msgid "Rest (seconds)"
+msgstr "الراحة (ثوانٍ)"
+
+msgid "Repetitions"
+msgstr "عدد التكرارات"
+
+msgid "Exercise notes"
+msgstr "ملاحظات التمرين"
+
+msgid "Advanced settings"
+msgstr "إعدادات متقدمة"
+
+msgid "Remove this workout day? Its saved exercises will be deleted, but workout history will remain."
+msgstr "هل تريد حذف يوم التدريب؟ ستُحذف تمارينه المحفوظة، لكن سجل التمارين السابقة سيبقى."
+
+msgid "Removing sets will discard their values. Continue?"
+msgstr "سيؤدي حذف المجموعات إلى فقدان قيمها. هل تريد المتابعة؟"
+
+msgid "You have unsaved workout changes. Leave this page?"
+msgstr "لديك تغييرات تدريب غير محفوظة. هل تريد مغادرة الصفحة؟"
+
+msgid "No exercises match your search."
+msgstr "لا توجد تمارين تطابق بحثك."
+
+msgid "Select at least one exercise."
+msgstr "اختر تمرينًا واحدًا على الأقل."
+
+msgid "Day"
+msgstr "يوم"
+
+msgid "Add interval"
+msgstr "إضافة فترة"
+
+msgid "selected"
+msgstr "محدد"
+
+msgid "sets"
+msgstr "مجموعات"
+
+msgid "Invalid save data."
+msgstr "بيانات الحفظ غير صالحة."
+
+msgid "Enter a program name of 120 characters or fewer."
+msgstr "أدخل اسمًا للبرنامج لا يتجاوز 120 حرفًا."
+
+msgid "A program can contain up to 50 workout days."
+msgstr "يمكن أن يحتوي البرنامج على 50 يوم تدريب كحد أقصى."
+
+msgid "Invalid workout day data."
+msgstr "بيانات يوم التدريب غير صالحة."
+
+msgid "Workout day ID"
+msgstr "معرّف يوم التدريب"
+
+msgid "A workout day could not be found in this program."
+msgstr "تعذر العثور على يوم التدريب في هذا البرنامج."
+
+msgid "Each workout day needs a name of 120 characters or fewer."
+msgstr "يحتاج كل يوم تدريب إلى اسم لا يتجاوز 120 حرفًا."
+
+msgid "Estimated duration"
+msgstr "المدة المقدرة"
+
+msgid "Workout day descriptions must be 4,000 characters or fewer."
+msgstr "يجب ألا يتجاوز وصف يوم التدريب 4,000 حرف."
+
+msgid "Invalid exercise list."
+msgstr "قائمة التمارين غير صالحة."
+
+msgid "Invalid exercise data."
+msgstr "بيانات التمرين غير صالحة."
+
+msgid "Exercise ID"
+msgstr "معرّف التمرين"
+
+msgid "An exercise can only appear once in a workout day."
+msgstr "يمكن إضافة التمرين مرة واحدة فقط في يوم التدريب."
+
+msgid "Select an available exercise."
+msgstr "اختر تمرينًا متاحًا."
+
+msgid "Rest time"
+msgstr "وقت الراحة"
+
+msgid "Exercise notes must be 255 characters or fewer."
+msgstr "يجب ألا تتجاوز ملاحظات التمرين 255 حرفًا."
+
+msgid "Invalid set list."
+msgstr "قائمة المجموعات غير صالحة."
+
+msgid "Set ID"
+msgstr "معرّف المجموعة"
+
+msgid "A set could not be found for this exercise."
+msgstr "تعذر العثور على مجموعة لهذا التمرين."
+
+msgid "Existing sets must be kept or explicitly removed."
+msgstr "يجب الإبقاء على المجموعات الحالية أو حذفها صراحةً."
+
+msgid "%(field)s must be a whole number of at least %(minimum)s."
+msgstr "يجب أن تكون قيمة %(field)s عددًا صحيحًا لا يقل عن %(minimum)s."
+
+msgid "Weight must be a non-negative number."
+msgstr "يجب أن يكون الوزن رقمًا غير سالب."
+
+msgid "Select a valid set type."
+msgstr "اختر نوع مجموعة صالحًا."
+
+msgid "Program '%(name)s' created. Add exercises to your first day."
+msgstr "تم إنشاء البرنامج '%(name)s'. أضف تمارين إلى يومك الأول."
+
+msgid "TRAINING LIBRARY"
+msgstr "مكتبة التدريب"
+
+msgid "Build a routine that fits your week. Add days whenever you need them."
+msgstr "أنشئ برنامجًا يناسب أسبوعك، وأضف أيام التدريب متى احتجت إليها."
+
+msgid "Search programs and workout days"
+msgstr "ابحث في البرامج وأيام التدريب"
+
+msgid "Search exercises in English or Arabic"
+msgstr "ابحث عن تمارين بالإنجليزية أو العربية"
+
+msgid "WORKOUT PROGRAM"
+msgstr "برنامج تدريبي"
+
+msgid "Edit program"
+msgstr "تعديل البرنامج"
+
+msgid "Add workout day"
+msgstr "إضافة يوم تمرين"
+
+msgid "Program overview"
+msgstr "ملخص البرنامج"
+
+msgid "Minutes planned"
+msgstr "دقائق التدريب"
+
+msgid "sec"
+msgstr "ث"
+
+msgid "Start workout"
+msgstr "ابدأ التمرين"
+
+msgid "Edit %(name)s"
+msgstr "تعديل %(name)s"
+
+msgid "Add your first workout day"
+msgstr "أضف يوم التدريب الأول"
+
+msgid "No programs found"
+msgstr "لم يتم العثور على برامج"
+
+msgid "Try another search, or clear the current filter."
+msgstr "جرّب البحث بكلمات أخرى أو امسح عامل التصفية الحالي."
+
+msgid "Your training starts here"
+msgstr "رحلتك التدريبية تبدأ هنا"
+
+msgid "Create a program, then add the workout days you want to follow."
+msgstr "أنشئ برنامجًا، ثم أضف أيام التدريب التي تريد اتباعها."
+
+msgid "Create your first program"
+msgstr "أنشئ برنامجك الأول"
+
+msgid "Back to programs"
+msgstr "العودة إلى البرامج"
+
+msgid "Programs"
+msgstr "البرامج"
+
+msgid "%(day_count)s workout day"
+msgid_plural "%(day_count)s workout days"
+msgstr[0] "%(day_count)s أيام تدريب"
+msgstr[1] "%(day_count)s يوم تدريب"
+msgstr[2] "%(day_count)s يوم تدريب"
+msgstr[3] "%(day_count)s أيام تدريب"
+msgstr[4] "%(day_count)s يوم تدريب"
+msgstr[5] "%(day_count)s يوم تدريب"
+
+msgid "%(exercise_count)s exercise"
+msgid_plural "%(exercise_count)s exercises"
+msgstr[0] "%(exercise_count)s تمارين"
+msgstr[1] "%(exercise_count)s تمرين"
+msgstr[2] "%(exercise_count)s تمرين"
+msgstr[3] "%(exercise_count)s تمارين"
+msgstr[4] "%(exercise_count)s تمرين"
+msgstr[5] "%(exercise_count)s تمرين"
+
+msgid "Program settings"
+msgstr "إعدادات البرنامج"
+
+msgid "Save program"
+msgstr "حفظ البرنامج"
+
+msgid "Add day"
+msgstr "إضافة يوم"
+
+msgid "Reorder days"
+msgstr "إعادة ترتيب الأيام"
+
+msgid "Day settings"
+msgstr "إعدادات اليوم"
+
+msgid "Delete day"
+msgstr "حذف اليوم"
+
+#: templates/plans/list.html
+#, python-format
+msgid "Delete “%(name)s”? Logged sessions are kept."
+msgstr "هل تريد حذف «%(name)s»؟ ستبقى جلسات التدريب المسجّلة محفوظة."
+
+msgid "Edit day settings"
+msgstr "تعديل إعدادات اليوم"
+
+msgid "Reorder"
+msgstr "إعادة الترتيب"
+
+msgid "All exercises"
+msgstr "جميع التمارين"
+
+msgid "A new day, ready when you are"
+msgstr "يوم جديد، ابدأ به متى شئت"
+
+msgid "Choose exercises from the library to build this workout."
+msgstr "اختر تمارين من المكتبة لبناء هذا التدريب."
+
+msgid "Choose exercises"
+msgstr "اختيار التمارين"
+
+msgid "EXERCISE CATALOG"
+msgstr "دليل التمارين"
+
+msgid "Filter by muscle group or goal"
+msgstr "تصفية حسب المجموعة العضلية أو الهدف"
+
+msgid "EXERCISE GUIDE"
+msgstr "دليل التمرين"
+
+msgid "Close exercise details"
+msgstr "إغلاق تفاصيل التمرين"
+
+msgid "Could not save your program. Please try again."
+msgstr "تعذر حفظ البرنامج. يرجى المحاولة مرة أخرى."
+
+msgid "Program saved"
+msgstr "تم حفظ البرنامج"
+
+msgid "Target weight (kg)"
+msgstr "الوزن المستهدف (كغ)"
+
+msgid "Individual set settings"
+msgstr "إعدادات كل مجموعة"
+
+msgid "Delete this workout day? Its saved exercises will be removed, but workout history will remain."
+msgstr "هل تريد حذف يوم التدريب؟ ستُحذف تمارينه المحفوظة، لكن سجل التدريب سيبقى."
+
+msgid "You have unsaved program changes. Leave this page?"
+msgstr "لديك تغييرات غير محفوظة في البرنامج. هل تريد مغادرة الصفحة؟"
+
+msgid "Mixed"
+msgstr "متفاوتة"
+
+msgid "Values differ between sets. Enter a value to apply it to all sets."
+msgstr "تختلف القيم بين المجموعات. أدخل قيمة لتطبيقها على جميع المجموعات."
+
+msgid "View exercise details"
+msgstr "عرض تفاصيل التمرين"
+
+msgid "No animation available"
+msgstr "لا يتوفر رسم متحرك"
+
+msgid "No target muscles recorded."
+msgstr "لم تُسجل عضلات مستهدفة."
+
+msgid "No equipment required"
+msgstr "لا يتطلب معدات"
+
+msgid "Collapse exercise"
+msgstr "طي التمرين"
+
+msgid "Expand exercise"
+msgstr "توسيع التمرين"
+
+msgid "Show less"
+msgstr "عرض أقل"
+
+msgid "Show settings"
+msgstr "عرض الإعدادات"
+
+msgid "Done"
+msgstr "تم"
+
+msgid "More actions"
+msgstr "إجراءات إضافية"
+
+msgid "sec rest"
+msgstr "ث. راحة"
+
+#: templates/plans/builder.html
+msgid "kg"
+msgstr "كجم"
+

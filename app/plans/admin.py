@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import PlanExercise, PlanSet, WorkoutPlan
+from .models import PlanExercise, PlanSet, WorkoutPlan, WorkoutProgram
+
+
+@admin.register(WorkoutProgram)
+class WorkoutProgramAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "updated_at")
+    search_fields = ("name", "user__username")
 
 
 class PlanExerciseInline(admin.TabularInline):
@@ -10,7 +16,7 @@ class PlanExerciseInline(admin.TabularInline):
 
 @admin.register(WorkoutPlan)
 class WorkoutPlanAdmin(admin.ModelAdmin):
-    list_display = ("name", "user", "goal", "estimated_duration_minutes", "created_at")
+    list_display = ("name", "program", "user", "goal", "program_order", "estimated_duration_minutes")
     list_filter = ("goal",)
     search_fields = ("name", "user__username")
     inlines = [PlanExerciseInline]
