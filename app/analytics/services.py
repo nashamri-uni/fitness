@@ -4,13 +4,83 @@ from datetime import datetime, time, timedelta
 from django.db.models import Avg, Count
 from django.utils import timezone
 
+from accounts.models import UserProfile, WeeklyWorkoutGoalHistory
+from plans.models import WorkoutPlan
 from workouts.models import PersonalRecord, SessionSet, WorkoutSession
+
+
+def _local_week_bounds(monday):
+    current_timezone = timezone.get_current_timezone()
+    start = timezone.make_aware(datetime.combine(monday, time.min), current_timezone)
+    end = timezone.make_aware(datetime.combine(monday + timedelta(weeks=1), time.min), current_timezone)
+    return start, end
+
+
+def weekly_goal_progress(user, week_start=None):
+    """Return completed sessions and unique active days for a user's local week."""
+    today = timezone.localdate()
+    current_monday = today - timedelta(days=today.weekday())
+    monday = current_monday if week_start is None else week_start - timedelta(days=week_start.weekday())
+    start, end = _local_week_bounds(monday)
+
+    profile = UserProfile.objects.filter(user=user).only("weekly_workout_goal").first()
+    if monday == current_monday:
+        goal = profile.weekly_workout_goal if profile else None
+    else:
+        history = (
+            WeeklyWorkoutGoalHistory.objects
+            .filter(user=user, effective_at__lt=start)
+            .order_by("-effective_at", "-pk")
+            .first()
+        )
+        goal = history.goal_days if history else None
+
+    started_at_values = list(
+        WorkoutSession.objects.filter(
+            user=user,
+            ended_at__isnull=False,
+            started_at__gte=start,
+            started_at__lt=end,
+        ).values_list("started_at", flat=True)
+    )
+    active_days = {
+        timezone.localtime(started_at).date()
+        for started_at in started_at_values
+    }
+    configured = goal is not None and 1 <= goal <= 7
+
+    return {
+        "week_start": monday,
+        "sessions": len(started_at_values),
+        "days": len(active_days),
+        "goal": goal if configured else None,
+        "percentage": min(round(len(active_days) * 100 / goal), 100) if configured else 0,
+    }
+
+
+def completed_sessions_this_week(user):
+    """Return a user's completed sessions in the current local calendar week."""
+    today = timezone.localdate()
+    monday = today - timedelta(days=today.weekday())
+    start, end = _local_week_bounds(monday)
+    return (
+        WorkoutSession.objects
+        .filter(
+            user=user,
+            ended_at__isnull=False,
+            started_at__gte=start,
+            started_at__lt=end,
+        )
+        .select_related("plan")
+        .order_by("-started_at")
+    )
 
 
 def summary(user, weeks=12):
     """Headline numbers for the analytics dashboard."""
     sessions = WorkoutSession.objects.filter(user=user, ended_at__isnull=False)
     sets = SessionSet.objects.filter(session_exercise__session__user=user)
+    goal_progress = weekly_goal_progress(user)
 
     start = timezone.now() - timedelta(weeks=weeks)
     recent = sessions.filter(started_at__gte=start)
@@ -18,6 +88,8 @@ def summary(user, weeks=12):
     return {
         "total_sessions": sessions.count(),
         "recent_sessions": recent.count(),
+        "sessions_this_week": goal_progress["sessions"],
+        "workout_plans": WorkoutPlan.objects.filter(user=user).count(),
         "total_sets": sets.count(),
         "total_volume_kg": round(sum(s.volume for s in sets), 1),
         "avg_session_minutes": round(sessions.aggregate(a=Avg("duration_minutes"))["a"] or 0, 1),
@@ -27,7 +99,10 @@ def summary(user, weeks=12):
             c=Count("session_exercise__exercise", distinct=True)
         )["c"],
         "avg_rating": round(sessions.filter(rating__isnull=False).aggregate(a=Avg("rating"))["a"] or 0, 1),
-        "streak_weeks": training_streak(user, weeks=weeks),
+        "streak_weeks": training_streak(user),
+        "weekly_goal_days": goal_progress["goal"],
+        "weekly_goal_completed_days": goal_progress["days"],
+        "weekly_goal_percent": goal_progress["percentage"],
     }
 
 
@@ -155,20 +230,35 @@ def recent_personal_records(user, limit=10):
     return PersonalRecord.objects.filter(user=user).select_related("exercise")[:limit]
 
 
-def training_streak(user, weeks=12):
-    """Consecutive ISO weeks (ending with the current week) with at least one session."""
-    start = timezone.now() - timedelta(weeks=weeks)
-    seen = {
-        session.started_at.isocalendar()[:2]
-        for session in WorkoutSession.objects.filter(user=user, started_at__gte=start)
-    }
+def training_streak(user, weeks=None):
+    """Consecutive local calendar weeks with at least one completed session."""
+    today = timezone.localdate()
+    current_monday = today - timedelta(days=today.weekday())
+    _, end = _local_week_bounds(current_monday)
+    sessions = WorkoutSession.objects.filter(
+        user=user,
+        ended_at__isnull=False,
+        started_at__lt=end,
+    )
+    if weeks is not None:
+        first_monday = current_monday - timedelta(weeks=weeks - 1)
+        start, _ = _local_week_bounds(first_monday)
+        sessions = sessions.filter(started_at__gte=start)
 
-    current = timezone.now().isocalendar()[:2]
     streak = 0
-    cursor = current
-    while cursor in seen:
-        streak += 1
-        # Move back one ISO week by stepping back 7 days.
-        day = timezone.now() - timedelta(weeks=streak)
-        cursor = day.isocalendar()[:2]
+    cursor = current_monday
+    current_week_active = False
+    for started_at in sessions.order_by("-started_at").values_list("started_at", flat=True).iterator():
+        local_started = timezone.localtime(started_at).date()
+        active_week = local_started - timedelta(days=local_started.weekday())
+        if active_week == cursor:
+            current_week_active = True
+            streak = max(streak, 1)
+        elif not current_week_active:
+            break
+        elif active_week == cursor - timedelta(weeks=1):
+            streak += 1
+            cursor = active_week
+        elif active_week < cursor - timedelta(weeks=1):
+            break
     return streak

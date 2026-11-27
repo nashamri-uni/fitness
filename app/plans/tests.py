@@ -161,7 +161,12 @@ class PlanTests(TestCase):
         logged_set.refresh_from_db()
         self.assertTrue(logged_set.is_personal_record)
         self.assertCountEqual(logged_set.records.values_list("pk", flat=True), record_ids)
-        self.assertEqual((summary(self.user), weekly_volume(self.user), exercise_progress(self.user)), analytics_before)
+        stats_before, volume_before, progress_before = analytics_before
+        stats_after = summary(self.user)
+        self.assertEqual(stats_after.pop("workout_plans"), stats_before.pop("workout_plans") - 1)
+        self.assertEqual(stats_after, stats_before)
+        self.assertEqual(weekly_volume(self.user), volume_before)
+        self.assertEqual(exercise_progress(self.user), progress_before)
 
     def test_program_list_uses_arabic_singular_counts(self):
         plan = self.create_plan()

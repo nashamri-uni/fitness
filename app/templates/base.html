@@ -14,56 +14,170 @@
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="{% url 'analytics:dashboard' %}">{% trans "FitPlanner" %}</a>
+      <a class="brand" href="{% url 'analytics:dashboard' %}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M6.5 7v10M17.5 7v10M3.5 9v6M20.5 9v6M6.5 12h11M3.5 12h3m11 0h3"/>
+        </svg>
+        <span>{% trans "FitPlanner" %}</span>
+      </a>
+      {% with current_namespace=request.resolver_match.namespace current_view=request.resolver_match.url_name %}
       <nav class="nav">
-        <a href="{% url 'analytics:dashboard' %}">{% trans "Dashboard" %}</a>
-        <a href="{% url 'exercises:library' %}">{% trans "Exercise Library" %}</a>
-        <a href="{% url 'plans:list' %}">{% trans "My Plans" %}</a>
-        <a href="{% url 'workouts:sessions' %}">{% trans "Sessions" %}</a>
-        <a href="{% url 'workouts:records' %}">{% trans "Records" %}</a>
-        <a href="{% url 'accounts:profile' %}">{% trans "Profile" %}</a>
+        <a class="nav-link" href="{% url 'analytics:dashboard' %}"{% if current_namespace == 'analytics' and current_view == 'dashboard' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>
+          </svg>
+          <span>{% trans "Dashboard" %}</span>
+        </a>
+        <a class="nav-link" href="{% url 'exercises:library' %}"{% if current_namespace == 'exercises' and current_view != 'manage' and current_view != 'create' and current_view != 'edit' and current_view != 'delete' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M6.5 7v10M17.5 7v10M3.5 9v6M20.5 9v6M6.5 12h11M3.5 12h3m11 0h3"/>
+          </svg>
+          <span>{% trans "Exercise Library" %}</span>
+        </a>
+        <a class="nav-link" href="{% url 'plans:list' %}"{% if current_namespace == 'plans' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M8.5 10h7M8.5 14h7M8.5 18h4"/>
+          </svg>
+          <span>{% trans "My Plans" %}</span>
+        </a>
+        <a class="nav-link" href="{% url 'workouts:sessions' %}"{% if current_namespace == 'workouts' and current_view != 'records' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4m8-4v4M4 10h16m-11 5 2 2 4-4"/>
+          </svg>
+          <span>{% trans "Sessions" %}</span>
+        </a>
+        <a class="nav-link" href="{% url 'workouts:records' %}"{% if current_namespace == 'workouts' and current_view == 'records' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M8 4h8l1 5a5 5 0 0 1-10 0l1-5Z"/><path d="M7 6H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4m-4 3v3m-4 2h8"/>
+          </svg>
+          <span>{% trans "Records" %}</span>
+        </a>
         {% if user.is_project_admin or user.is_staff %}
-          <a href="{% url 'exercises:manage' %}">{% trans "Manage" %}</a>
+          <a class="nav-link" href="{% url 'exercises:manage' %}"{% if current_namespace == 'exercises' and current_view != 'library' and current_view != 'detail' %} aria-current="page"{% endif %}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2"/><circle cx="15" cy="17" r="2"/>
+            </svg>
+            <span>{% trans "Manage" %}</span>
+          </a>
         {% endif %}
       </nav>
+      {% endwith %}
 
-      <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher" data-auto-submit>
-        {% csrf_token %}
-        <input name="next" type="hidden" value="{{ request.path }}">
-        <select name="language" aria-label="{% trans 'Language' %}" data-autosubmit>
-          {% get_available_languages as LANGUAGES %}
-          {% get_language_info_list for LANGUAGES as languages %}
-          {% for language in languages %}
-            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
-              {{ language.name_local }}
-            </option>
-          {% endfor %}
-        </select>
-        <button type="submit">{% trans "Switch" %}</button>
-      </form>
+      <div class="header-controls">
+        <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher" data-auto-submit>
+          {% csrf_token %}
+          <input name="next" type="hidden" value="{{ request.path }}">
+          <input type="hidden" name="language" value="{{ LANGUAGE_CODE }}" data-language-value disabled>
+          <div class="language-dropdown" data-language-dropdown>
+            <button
+              type="button"
+              class="language-trigger"
+              data-language-trigger
+              aria-label="{% trans 'Language' %}"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              aria-controls="language-dropdown-menu"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>
+              </svg>
+            </button>
+            <div class="language-menu" id="language-dropdown-menu" role="menu" hidden>
+              {% get_available_languages as LANGUAGES %}
+              {% get_language_info_list for LANGUAGES as languages %}
+              {% for language in languages %}
+                <button
+                  type="button"
+                  class="language-option{% if language.code == LANGUAGE_CODE %} is-selected{% endif %}"
+                  data-language-option
+                  data-language="{{ language.code }}"
+                  role="menuitemradio"
+                  aria-checked="{% if language.code == LANGUAGE_CODE %}true{% else %}false{% endif %}"
+                >
+                  {{ language.name_local }}
+                  <svg class="language-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"{% if language.code != LANGUAGE_CODE %} hidden{% endif %}>
+                    <path d="m5 12 4 4L19 6"/>
+                  </svg>
+                </button>
+              {% endfor %}
+            </div>
+          </div>
+          <noscript>
+            <div class="language-fallback">
+              <select name="language" aria-label="{% trans 'Language' %}">
+                {% for language in languages %}
+                  <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+                    {{ language.name_local }}
+                  </option>
+                {% endfor %}
+              </select>
+              <button type="submit">{% trans "Switch" %}</button>
+            </div>
+          </noscript>
+        </form>
 
-      <div class="user-area">
-        <button
-    type="button"
-    id="theme-toggle"
-    class="theme-toggle"
-    aria-label="{% trans 'Switch to dark mode' %}"
-    data-dark-label="{% trans 'Switch to dark mode' %}"
-    data-light-label="{% trans 'Switch to light mode' %}"
-    aria-pressed="false"
->
-    🌙
-</button>
-        {% if user.is_authenticated %}
-          <span class="user-name">{{ user.username }}</span>
-          <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
-            {% csrf_token %}
-            <button type="submit" class="btn-link">{% trans "Log out" %}</button>
-          </form>
-        {% else %}
-          <a class="btn-link" href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
-          <a class="btn-link" href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
-        {% endif %}
+        <div class="user-area">
+          <button
+            type="button"
+            id="theme-toggle"
+            class="theme-toggle"
+            aria-label="{% trans 'Switch to dark mode' %}"
+            data-label-light="{% trans 'Switch to dark mode' %}"
+            data-label-dark="{% trans 'Switch to light mode' %}"
+            aria-pressed="false"
+          >
+            <svg class="theme-toggle-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M20.4 15.1A8.5 8.5 0 0 1 8.9 3.6 8.5 8.5 0 1 0 20.4 15.1Z"/>
+            </svg>
+            <svg class="theme-toggle-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/>
+            </svg>
+          </button>
+          {% if user.is_authenticated %}
+            <div class="account-dropdown" data-account-dropdown>
+              <button
+                type="button"
+                class="account-dropdown-trigger"
+                data-account-dropdown-trigger
+                aria-expanded="false"
+                aria-controls="account-dropdown-menu"
+                aria-label="{{ user.username }}"
+              >
+                <span class="account-avatar" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+                  </svg>
+                </span>
+                <span class="account-username">{{ user.username }}</span>
+                <svg class="account-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="m7 10 5 5 5-5"/>
+                </svg>
+              </button>
+              <div class="account-dropdown-menu" id="account-dropdown-menu" hidden>
+                <a class="account-menu-item{% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'profile' %} is-current{% endif %}" href="{% url 'accounts:profile' %}"{% if request.resolver_match.namespace == 'accounts' and request.resolver_match.url_name == 'profile' %} aria-current="page"{% endif %}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+                  </svg>
+                  <span>{% trans "Profile" %}</span>
+                </a>
+                <form method="post" action="{% url 'accounts:logout' %}" class="account-logout-form">
+                  {% csrf_token %}
+                  <button type="submit" class="account-menu-item account-menu-item--logout">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                      <path d="M10 17l5-5-5-5m5 5H3"/><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/>
+                    </svg>
+                    <span>{% trans "Log out" %}</span>
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% else %}
+            <div class="header-auth-links">
+              <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
+              <a href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
+            </div>
+          {% endif %}
+        </div>
       </div>
     </div>
   </header>
@@ -79,10 +193,6 @@
 
     {% block content %}{% endblock %}
   </main>
-
-  <footer class="site-footer">
-    <div class="container">{% trans "Workout and Fitness Planner — Django project" %}</div>
-  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="{% static 'js/app.js' %}"></script>
