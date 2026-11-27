@@ -25,6 +25,48 @@ class PlanTests(TestCase):
     def create_plan(self):
         return WorkoutPlan.objects.create(user=self.user, name="Push Day", goal="hypertrophy")
 
+    def test_plan_list_search_matches_english_and_arabic_names_for_current_user(self):
+        self.create_plan()
+        arabic_plan = WorkoutPlan.objects.create(user=self.user, name="تمرين الصدر")
+        WorkoutPlan.objects.create(user=self.other, name="Push Day")
+
+        english_response = self.client.get(reverse("plans:list"), {"q": "pUsH"})
+        self.assertEqual(
+            list(english_response.context["plans"].values_list("name", flat=True)),
+            ["Push Day"],
+        )
+        self.assertContains(english_response, "Push Day")
+        self.assertNotContains(english_response, "تمرين الصدر")
+
+        arabic_response = self.client.get(reverse("plans:list"), {"q": "تمرين"})
+        self.assertEqual(
+            list(arabic_response.context["plans"].values_list("pk", flat=True)),
+            [arabic_plan.pk],
+        )
+        self.assertContains(arabic_response, "تمرين الصدر")
+        self.assertNotContains(arabic_response, "Push Day")
+
+    def test_plan_list_search_shows_empty_message_and_clear_search_action(self):
+        self.create_plan()
+
+        response = self.client.get(reverse("plans:list"), {"q": "Cardio"})
+
+        self.assertEqual(response.context["plans"].count(), 0)
+        self.assertContains(response, "No workout plans match your search.")
+        self.assertContains(response, 'href="%s"' % reverse("plans:list"))
+        self.assertContains(response, "Clear search")
+        self.assertNotContains(response, "You have no plans yet.")
+
+    def test_plan_list_search_controls_are_translated_into_arabic(self):
+        self.create_plan()
+        self.client.post(reverse("set_language"), {"language": "ar", "next": "/"})
+
+        response = self.client.get(reverse("plans:list"), {"q": "غير موجود"})
+
+        self.assertContains(response, "اسم الخطة")
+        self.assertContains(response, "مسح البحث")
+        self.assertContains(response, "لا توجد خطط تدريب تطابق بحثك.")
+
     def test_create_plan(self):
         response = self.client.post(
             reverse("plans:create"),

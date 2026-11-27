@@ -202,6 +202,9 @@ button:hover, .btn:hover { background: var(--accent-dark); }
 /* Filters */
 .filters { display: flex; flex-wrap: wrap; gap: .5rem; align-items: end; }
 .filters > div { min-width: 160px; }
+.plan-search { display: flex; flex-wrap: wrap; align-items: end; gap: .5rem; }
+.plan-search > div:first-child { flex: 1; min-width: min(100%, 16rem); }
+.plan-search-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 
 /* Hierarchical exercise picker */
 .exercise-browser { min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -308,6 +311,7 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   .nav { font-size: .9rem; }
   .stat .value { font-size: 1.3rem; }
   th, td { padding: .4rem; font-size: .9rem; }
+  .plan-search > div:first-child { flex-basis: 100%; }
 }
 
 

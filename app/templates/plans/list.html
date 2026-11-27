@@ -8,6 +8,17 @@
   <h2>{% trans "My workout plans" %}</h2>
   <p><a class="btn" href="{% url 'plans:create' %}">{% trans "Create new plan" %}</a></p>
 
+  <form method="get" class="plan-search">
+    <div>
+      <label for="plan-search">{% trans "Plan name" %}</label>
+      <input type="text" id="plan-search" name="q" value="{{ search_query }}" placeholder="{% trans 'Plan name' %}">
+    </div>
+    <div class="plan-search-actions">
+      <button type="submit">{% trans "Search" %}</button>
+      <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Clear search" %}</a>
+    </div>
+  </form>
+
   {% if plans %}
     <div class="table-wrap">
       <table>
@@ -43,7 +54,11 @@
       </table>
     </div>
   {% else %}
-    <p class="empty">{% trans "You have no plans yet. Create one and add exercises from the library." %}</p>
+    {% if search_query %}
+      <p class="empty">{% trans "No workout plans match your search." %}</p>
+    {% else %}
+      <p class="empty">{% trans "You have no plans yet. Create one and add exercises from the library." %}</p>
+    {% endif %}
   {% endif %}
 </div>
 {% endblock %}
