@@ -1,4 +1,70 @@
 // The language menu submits the existing Django language-switch form.
+function setupPasswordToggles() {
+  document.querySelectorAll("[data-password-toggle]").forEach((toggle) => {
+    const input = document.getElementById(toggle.dataset.passwordToggle);
+    const showLabel = toggle.dataset.labelShow;
+    const hideLabel = toggle.dataset.labelHide;
+    if (!input || !showLabel || !hideLabel) {
+      console.error("Could not initialize a password visibility control.");
+      return;
+    }
+
+    toggle.addEventListener("click", () => {
+      const showPassword = input.type === "password";
+      input.type = showPassword ? "text" : "password";
+      toggle.setAttribute("aria-pressed", String(showPassword));
+      toggle.setAttribute("aria-label", showPassword ? hideLabel : showLabel);
+    });
+  });
+}
+
+function setupPasswordFeedback() {
+  const password = document.getElementById("id_password1");
+  const confirmation = document.getElementById("id_password2");
+  if (!password || !confirmation) return;
+
+  const lengthRule = document.querySelector('[data-password-rule="minimum-length"]');
+  const lengthStatus = lengthRule && lengthRule.querySelector("[data-password-rule-status]");
+  const matchFeedback = document.getElementById("register-password-match");
+  const matchText = matchFeedback && matchFeedback.querySelector("[data-password-match-text]");
+  if (!lengthRule || !lengthStatus || !matchFeedback || !matchText) {
+    console.error("Could not initialize registration password feedback.");
+    return;
+  }
+
+  const minimumLength = Number(lengthRule.dataset.minimum);
+  if (!Number.isInteger(minimumLength) || minimumLength < 1) {
+    console.error("The registration password minimum length is invalid.");
+    return;
+  }
+
+  function updatePasswordFeedback() {
+    const meetsMinimumLength = Array.from(password.value).length >= minimumLength;
+    lengthRule.dataset.valid = String(meetsMinimumLength);
+    lengthStatus.textContent = meetsMinimumLength
+      ? lengthStatus.dataset.validLabel
+      : lengthStatus.dataset.invalidLabel;
+
+    if (!confirmation.value) {
+      matchFeedback.hidden = true;
+      confirmation.removeAttribute("aria-invalid");
+      return;
+    }
+
+    const passwordsMatch = password.value === confirmation.value;
+    matchFeedback.hidden = false;
+    matchFeedback.dataset.valid = String(passwordsMatch);
+    matchText.textContent = passwordsMatch
+      ? matchFeedback.dataset.labelMatch
+      : matchFeedback.dataset.labelMismatch;
+    confirmation.setAttribute("aria-invalid", String(!passwordsMatch));
+  }
+
+  password.addEventListener("input", updatePasswordFeedback);
+  confirmation.addEventListener("input", updatePasswordFeedback);
+  updatePasswordFeedback();
+}
+
 function setupLanguageSwitcher() {
   document.querySelectorAll("form[data-auto-submit]").forEach((form) => {
     const dropdown = form.querySelector("[data-language-dropdown]");
@@ -344,6 +410,8 @@ function setupActivityChart() {
 
 // Progress charts for the analytics dashboard (FREQ-12).
 document.addEventListener("DOMContentLoaded", () => {
+  setupPasswordToggles();
+  setupPasswordFeedback();
   setupLanguageSwitcher();
   setupAccountDropdown();
   setupActivityChart();

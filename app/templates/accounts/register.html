@@ -1,17 +1,242 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
 {% block title %}{% trans "Register" %} &middot; FitPlanner{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/auth.css' %}">{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block header_class %} auth-header-inner{% endblock %}
+{% block primary_navigation %}{% endblock %}
+{% block authentication_header_links %}{% endblock %}
+{% block main_class %} auth-main{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 560px;">
-  <h2>{% trans "Create an account" %}</h2>
-  <form method="post">
-    {% csrf_token %}
-    {% include "partials/form_fields.html" %}
-    <div class="form-actions">
-      <button type="submit">{% trans "Register" %}</button>
+<div class="auth-shell auth-register">
+  <section class="auth-hero auth-hero--register" aria-labelledby="register-hero-title">
+    <div class="auth-hero-content">
+      <div class="auth-hero-brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M6.5 7v10M17.5 7v10M3.5 9v6M20.5 9v6M6.5 12h11M3.5 12h3m11 0h3"/>
+        </svg>
+        <span>{% trans "FitPlanner" %}</span>
+      </div>
+      <h1 id="register-hero-title">{% trans "Join FitPlanner" %}</h1>
+      <p>{% trans "Create your account and start building toward your goals." %}</p>
+      <ul class="auth-feature-list">
+        <li>
+          <span class="auth-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
+          </span>
+          {% trans "Personalized workout plans" %}
+        </li>
+        <li>
+          <span class="auth-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
+          </span>
+          {% trans "Progress and training insights" %}
+        </li>
+        <li>
+          <span class="auth-feature-check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m5 12 4 4L19 6"/></svg>
+          </span>
+          {% trans "A varied exercise library" %}
+        </li>
+      </ul>
     </div>
-  </form>
+  </section>
+
+  <section class="auth-panel auth-panel--register" aria-labelledby="register-title">
+    <div class="auth-panel-content">
+      <header class="auth-panel-heading">
+        <h2 id="register-title">{% trans "Create an account" %}</h2>
+        <p>{% trans "Set up your profile to get started" %}</p>
+      </header>
+
+      <form method="post" class="auth-form auth-register-form">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <ul class="auth-errors auth-global-errors" role="alert">
+            {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="auth-fields-grid">
+          <div class="auth-field">
+            <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+              </svg>
+              {{ form.first_name }}
+            </div>
+            <ul class="auth-errors" id="register-first-name-errors" aria-live="polite"{% if not form.first_name.errors %} hidden{% endif %}>
+              {% for error in form.first_name.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field">
+            <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+              </svg>
+              {{ form.last_name }}
+            </div>
+            <ul class="auth-errors" id="register-last-name-errors" aria-live="polite"{% if not form.last_name.errors %} hidden{% endif %}>
+              {% for error in form.last_name.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field">
+            <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+              </svg>
+              {{ form.username }}
+            </div>
+            <ul class="auth-errors" id="register-username-errors" aria-live="polite"{% if not form.username.errors %} hidden{% endif %}>
+              {% for error in form.username.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field">
+            <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/>
+              </svg>
+              {{ form.email }}
+            </div>
+            <ul class="auth-errors" id="register-email-errors" aria-live="polite"{% if not form.email.errors %} hidden{% endif %}>
+              {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field">
+            <label for="{{ form.gender.id_for_label }}">{{ form.gender.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>
+              </svg>
+              {{ form.gender }}
+            </div>
+            <ul class="auth-errors" id="register-gender-errors" aria-live="polite"{% if not form.gender.errors %} hidden{% endif %}>
+              {% for error in form.gender.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field">
+            <label for="{{ form.weekly_workout_goal.id_for_label }}">{{ form.weekly_workout_goal.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>
+              </svg>
+              {{ form.weekly_workout_goal }}
+            </div>
+            <ul class="auth-errors" id="register-weekly-workout-goal-errors" aria-live="polite"{% if not form.weekly_workout_goal.errors %} hidden{% endif %}>
+              {% for error in form.weekly_workout_goal.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field auth-field--span">
+            <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>
+              </svg>
+              {{ form.password1 }}
+              <button
+                type="button"
+                class="auth-password-toggle"
+                data-password-toggle="id_password1"
+                data-label-show="{% trans 'Show password' %}"
+                data-label-hide="{% trans 'Hide password' %}"
+                aria-label="{% trans 'Show password' %}"
+                aria-controls="id_password1"
+                aria-pressed="false"
+              >
+                <svg class="password-eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>
+                </svg>
+                <svg class="password-eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="m3 3 18 18M10.6 6.2A10.7 10.7 0 0 1 12 6c6.2 0 9.5 6 9.5 6a17 17 0 0 1-3.1 3.6M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.3 6 9.5 6c1 0 2-.2 2.8-.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                </svg>
+              </button>
+            </div>
+            <p class="auth-field-hint" id="register-password1-help">{{ form.password1.help_text }}</p>
+            <ul class="auth-password-checklist" id="register-password-checks" aria-label="{% trans 'Password requirements' %}">
+              <li class="auth-password-rule" data-password-rule="minimum-length" data-minimum="8" data-valid="false">
+                <span class="auth-password-rule-check" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 8 3.2 3.2L13 4.5"/></svg>
+                </span>
+                <span>{% trans "At least 8 characters" %}</span>
+                <span class="auth-password-visually-hidden" data-password-rule-status data-valid-label="{% trans 'Met' %}" data-invalid-label="{% trans 'Not met' %}" aria-live="polite" aria-atomic="true">{% trans "Not met" %}</span>
+              </li>
+            </ul>
+            <ul class="auth-errors" id="register-password1-errors" aria-live="polite"{% if not form.password1.errors %} hidden{% endif %}>
+              {% for error in form.password1.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+
+          <div class="auth-field auth-field--span">
+            <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+            <div class="auth-input-wrap">
+              <svg class="auth-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                <rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>
+              </svg>
+              {{ form.password2 }}
+              <button
+                type="button"
+                class="auth-password-toggle"
+                data-password-toggle="id_password2"
+                data-label-show="{% trans 'Show password' %}"
+                data-label-hide="{% trans 'Hide password' %}"
+                aria-label="{% trans 'Show password' %}"
+                aria-controls="id_password2"
+                aria-pressed="false"
+              >
+                <svg class="password-eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>
+                </svg>
+                <svg class="password-eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                  <path d="m3 3 18 18M10.6 6.2A10.7 10.7 0 0 1 12 6c6.2 0 9.5 6 9.5 6a17 17 0 0 1-3.1 3.6M6.2 6.2C3.8 7.8 2.5 12 2.5 12s3.3 6 9.5 6c1 0 2-.2 2.8-.5"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+                </svg>
+              </button>
+            </div>
+            <p
+              class="auth-password-feedback"
+              id="register-password-match"
+              data-label-match="{% trans 'Passwords match.' %}"
+              data-label-mismatch="{% trans 'Passwords do not match.' %}"
+              aria-live="polite"
+              aria-atomic="true"
+              hidden
+            >
+              <span class="auth-password-feedback-icon" aria-hidden="true">
+                <svg class="password-match-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m3 8 3.2 3.2L13 4.5"/></svg>
+                <svg class="password-match-error" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="m4 4 8 8m0-8-8 8"/></svg>
+              </span>
+              <span data-password-match-text></span>
+            </p>
+            <ul class="auth-errors" id="register-password2-errors" aria-live="polite"{% if not form.password2.errors %} hidden{% endif %}>
+              {% for error in form.password2.errors %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit">
+          <span>{% trans "Create Account" %}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6m-3-3h6"/>
+          </svg>
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        {% trans "Already have an account?" %}
+        <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
+      </p>
+    </div>
+  </section>
 </div>
 {% endblock %}
