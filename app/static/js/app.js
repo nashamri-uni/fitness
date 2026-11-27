@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         themeButton.setAttribute(
             "aria-label",
-            isDark ? "Switch to light mode" : "Switch to dark mode"
+            isDark ? themeButton.dataset.lightLabel : themeButton.dataset.darkLabel
         );
 
         themeButton.setAttribute("aria-pressed", String(isDark));

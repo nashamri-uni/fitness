@@ -13,7 +13,7 @@
     {% csrf_token %}
     <div class="form-actions">
       <button type="submit" class="btn-danger">{% trans "Yes, delete" %}</button>
-      <a class="btn btn-secondary" href="{% url 'plans:detail' plan.pk %}">{% trans "Cancel" %}</a>
+      <a class="btn btn-secondary" href="{% if request.GET.from == 'programs' %}{% url 'plans:list' %}{% else %}{% url 'plans:detail' plan.pk %}{% endif %}">{% trans "Cancel" %}</a>
     </div>
   </form>
 </div>

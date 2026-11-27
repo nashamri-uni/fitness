@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Workout Builder" %} &middot; FitPlanner{% endblock %}
+
+{% block content %}
+<section
+  class="workout-builder"
+  id="workout-builder"
+  data-save-url="{% url 'plans:save_program' program.pk %}"
+  data-program-url="{% url 'plans:program_builder' program.pk %}"
+  data-day-url-template="{% url 'plans:detail' 0 %}"
+  data-plan-list-url="{% url 'plans:list' %}"
+  data-selected-plan-id="{{ selected_plan_id }}"
+  data-start-new-day="{{ start_new_day|yesno:'true,false' }}"
+>
+  <input type="hidden" id="builder-csrf" value="{{ csrf_token }}">
+  <header class="builder-toolbar">
+    <a class="builder-back" href="{% url 'plans:list' %}" aria-label="{% trans 'Back to programs' %}">
+      <span aria-hidden="true">←</span> <span>{% trans "Programs" %}</span>
+    </a>
+    <div class="builder-program-heading">
+      <span class="builder-program-mark" aria-hidden="true">✦</span>
+      <div>
+        <p class="product-eyebrow">{% trans "WORKOUT PROGRAM" %}</p>
+        <h1 id="builder-program-title">{{ builder_data.program.name }}</h1>
+      </div>
+      <button id="builder-edit-program-title" type="button" class="builder-title-edit" aria-label="{% trans 'Edit program name' %}" title="{% trans 'Edit program name' %}">✎</button>
+      <details class="builder-popover builder-program-settings" id="builder-program-settings">
+        <summary aria-label="{% trans 'Program settings' %}" title="{% trans 'Program settings' %}">···</summary>
+        <div class="builder-popover-content">
+          <label for="builder-program-name">{% trans "Program name" %}</label>
+          <input id="builder-program-name" type="text" maxlength="120" value="{{ builder_data.program.name }}" required>
+        </div>
+      </details>
+    </div>
+    <div class="builder-header-actions">
+      <span class="builder-save-status" id="builder-save-status" role="status" aria-live="polite">
+        <span class="builder-status-dot" aria-hidden="true"></span>
+        <span id="builder-save-status-text">{% trans "All changes saved" %}</span>
+      </span>
+      <button id="builder-save" type="button" class="builder-save-button">
+        <span aria-hidden="true">✓</span> {% trans "Save program" %}
+      </button>
+    </div>
+  </header>
+
+  {% if add_form.errors %}
+    <div class="builder-save-error" role="alert">
+      {% for field in add_form %}
+        {% for error in field.errors %}<p>{{ error }}</p>{% endfor %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="builder-daybar">
+    <nav id="builder-days" class="builder-day-tabs" aria-label="{% trans 'Workout days' %}"></nav>
+    <button id="builder-add-day" type="button" class="builder-add-day">
+      <span aria-hidden="true">+</span> {% trans "Add day" %}
+    </button>
+    <button id="builder-reorder-days" type="button" class="builder-mode-button" aria-pressed="false">
+      <span aria-hidden="true">↕</span> <span>{% trans "Reorder days" %}</span>
+    </button>
+    <details class="builder-popover builder-day-settings" id="builder-day-settings">
+      <summary aria-label="{% trans 'Day settings' %}" title="{% trans 'Day settings' %}">⚙</summary>
+      <div class="builder-popover-content builder-day-settings-content">
+        <label for="builder-day-name">{% trans "Day name" %}</label>
+        <input id="builder-day-name" type="text" maxlength="120" required>
+        <label for="builder-day-duration">{% trans "Estimated minutes" %}</label>
+        <input id="builder-day-duration" type="number" min="1" max="2147483647" required>
+        <label for="builder-day-description">{% trans "Description" %}</label>
+        <textarea id="builder-day-description" rows="2" maxlength="4000"></textarea>
+        <button id="builder-remove-day" type="button" class="builder-delete-day">
+          <span aria-hidden="true">⌫</span> {% trans "Delete day" %}
+        </button>
+      </div>
+    </details>
+  </div>
+
+  <div class="builder-layout">
+    <section class="builder-workout-panel" aria-labelledby="builder-exercises-title">
+      <div class="builder-section-heading">
+        <div class="builder-section-title">
+          <div class="builder-active-day-heading">
+            <h2 id="builder-exercises-title">{% trans "Exercises" %}</h2>
+            <button id="builder-edit-day" type="button" class="builder-title-edit" aria-label="{% trans 'Edit day settings' %}" title="{% trans 'Edit day settings' %}">✎</button>
+          </div>
+          <span class="builder-count-badge" id="builder-exercise-count" aria-live="polite"></span>
+        </div>
+        <div class="builder-exercise-toolbar">
+          <button id="builder-open-library" type="button" class="builder-mobile-add" aria-controls="builder-library" aria-expanded="false">
+            <span aria-hidden="true">+</span> {% trans "Add exercise" %}
+          </button>
+          <button id="builder-reorder-exercises" type="button" class="builder-mode-button" aria-label="{% trans 'Reorder' %}" aria-pressed="false">
+            <span aria-hidden="true">↕</span> <span>{% trans "Reorder" %}</span>
+          </button>
+          <button id="builder-add-selected-inline" type="button" class="builder-desktop-add">
+            <span aria-hidden="true">+</span> {% trans "Add exercise" %}
+          </button>
+        </div>
+      </div>
+      <div id="builder-selected-exercises" class="builder-selected-exercises"></div>
+      <div id="builder-empty-day" class="builder-empty" hidden>
+        <span class="builder-empty-icon" aria-hidden="true">＋</span>
+        <h3>{% trans "A new day, ready when you are" %}</h3>
+        <p class="muted">{% trans "Choose exercises from the library to build this workout." %}</p>
+        <button type="button" class="builder-empty-add" data-open-library aria-controls="builder-library" aria-expanded="false">
+          <span aria-hidden="true">+</span> {% trans "Choose exercises" %}
+        </button>
+      </div>
+    </section>
+
+    <aside id="builder-library" class="builder-library" aria-labelledby="builder-library-title">
+      <div class="builder-library-heading">
+        <div>
+          <p class="product-eyebrow">{% trans "EXERCISE CATALOG" %}</p>
+          <h2 id="builder-library-title">{% trans "Choose exercises" %}</h2>
+        </div>
+        <button id="builder-close-library" type="button" class="builder-library-close" aria-label="{% trans 'Close exercise library' %}">×</button>
+      </div>
+      <div class="builder-library-search">
+        <span aria-hidden="true">⌕</span>
+        <label class="sr-only" for="builder-search">{% trans "Search exercises in English or Arabic" %}</label>
+        <input id="builder-search" type="search" autocomplete="off" placeholder="{% trans 'Search exercises in English or Arabic' %}">
+        <button id="builder-clear-search" type="button" aria-label="{% trans 'Clear search' %}" hidden>×</button>
+      </div>
+      <div class="builder-library-filter">
+        <label class="sr-only" for="builder-category">{% trans "Filter by muscle group or goal" %}</label>
+        <select id="builder-category">
+          <option value="">{% trans "All exercises" %}</option>
+        </select>
+        <span id="builder-library-result-count" class="muted" aria-live="polite"></span>
+      </div>
+      <div id="builder-library-list" class="builder-library-list"></div>
+      <div class="builder-library-footer">
+        <span id="builder-selection-count" class="builder-selection-count" aria-live="polite"></span>
+        <button id="builder-add-selected" type="button" disabled>
+          <span aria-hidden="true">+</span> {% trans "Add selected" %}
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <dialog id="exercise-preview-dialog" class="exercise-preview-dialog" aria-labelledby="exercise-preview-title">
+    <div class="exercise-preview-shell">
+      <header class="exercise-preview-header">
+        <div>
+          <p class="product-eyebrow">{% trans "EXERCISE GUIDE" %}</p>
+          <h2 id="exercise-preview-title"></h2>
+        </div>
+        <button id="exercise-preview-close" type="button" class="builder-library-close" aria-label="{% trans 'Close exercise details' %}">×</button>
+      </header>
+      <div class="exercise-preview-content">
+        <div class="exercise-preview-media">
+          <img id="exercise-preview-image" alt="" hidden>
+          <div id="exercise-preview-no-image" class="exercise-preview-placeholder" hidden>✦</div>
+        </div>
+        <div class="exercise-preview-copy">
+          <p id="exercise-preview-description" class="exercise-preview-description" dir="auto" hidden></p>
+          <section>
+            <h3>{% trans "Target muscles" %}</h3>
+            <div id="exercise-preview-muscles" class="exercise-preview-tags"></div>
+          </section>
+          <section>
+            <h3>{% trans "Equipment" %}</h3>
+            <div id="exercise-preview-equipment" class="exercise-preview-tags"></div>
+          </section>
+          <section>
+            <h3>{% trans "Instructions" %}</h3>
+            <p id="exercise-preview-instructions" class="exercise-preview-instructions" dir="auto"></p>
+          </section>
+        </div>
+      </div>
+      <footer class="exercise-preview-footer">
+        <button id="exercise-preview-add" type="button">
+          <span aria-hidden="true">+</span> {% trans "Add exercise" %}
+        </button>
+      </footer>
+    </div>
+  </dialog>
+
+  <div id="builder-labels" hidden
+    data-saved="{% trans 'All changes saved' %}"
+    data-unsaved="{% trans 'Unsaved changes' %}"
+    data-saving="{% trans 'Saving…' %}"
+    data-save-error="{% trans 'Could not save your program. Please try again.' %}"
+    data-save-success="{% trans 'Program saved' %}"
+    data-add-exercise="{% trans 'Add exercise' %}"
+    data-added="{% trans 'Added' %}"
+    data-remove="{% trans 'Remove' %}"
+    data-remove-exercise="{% trans 'Remove exercise' %}"
+    data-move-up="{% trans 'Move up' %}"
+    data-move-down="{% trans 'Move down' %}"
+    data-rest="{% trans 'Rest (seconds)' %}"
+    data-repetitions="{% trans 'Repetitions' %}"
+    data-duration="{% trans 'Duration (seconds)' %}"
+    data-duration-minutes="{% trans 'Duration (minutes)' %}"
+    data-weight="{% trans 'Target weight (kg)' %}"
+    data-sets="{% trans 'Sets' %}"
+    data-set-count="{% trans 'Number of sets' %}"
+    data-interval-count="{% trans 'Intervals' %}"
+    data-add-set="{% trans 'Add set' %}"
+    data-set="{% trans 'Set' %}"
+    data-notes="{% trans 'Exercise notes' %}"
+    data-advanced="{% trans 'Individual set settings' %}"
+    data-confirm-remove-day="{% trans 'Delete this workout day? Its saved exercises will be removed, but workout history will remain.' %}"
+    data-confirm-remove-sets="{% trans 'Removing sets will discard their values. Continue?' %}"
+    data-confirm-leave="{% trans 'You have unsaved program changes. Leave this page?' %}"
+    data-no-results="{% trans 'No exercises match your search.' %}"
+    data-select-exercises="{% trans 'Select at least one exercise.' %}"
+    data-exercise-count-one="{% trans 'exercise' %}"
+    data-exercise-count-many="{% trans 'exercises' %}"
+    data-sets-lower="{% trans 'sets' %}"
+    data-warmup="{% trans 'Warm-up' %}"
+    data-drop-set="{% trans 'Drop set' %}"
+    data-failure="{% trans 'To failure' %}"
+    data-normal="{% trans 'Normal' %}"
+    data-set-type="{% trans 'Set type' %}"
+    data-day-prefix="{% trans 'Day' %}"
+    data-add-interval="{% trans 'Add interval' %}"
+    data-selected="{% trans 'selected' %}"
+    data-all-categories="{% trans 'All exercises' %}"
+    data-mixed="{% trans 'Mixed' %}"
+    data-values-vary="{% trans 'Values differ between sets. Enter a value to apply it to all sets.' %}"
+    data-preview="{% trans 'View exercise details' %}"
+    data-no-image="{% trans 'No animation available' %}"
+    data-no-instructions="{% trans 'No instructions recorded.' %}"
+    data-no-muscles="{% trans 'No target muscles recorded.' %}"
+    data-no-equipment="{% trans 'No equipment required' %}"
+    data-primary="{% trans 'Primary' %}"
+    data-secondary="{% trans 'Secondary' %}"
+    data-collapse="{% trans 'Collapse exercise' %}"
+    data-expand="{% trans 'Expand exercise' %}"
+    data-collapse-summary="{% trans 'Show less' %}"
+    data-expand-summary="{% trans 'Show settings' %}"
+    data-reorder-done="{% trans 'Done' %}"
+    data-reorder-days="{% trans 'Reorder days' %}"
+    data-reorder-exercises="{% trans 'Reorder' %}"
+    data-edit="{% trans 'Edit' %}"
+    data-more-actions="{% trans 'More actions' %}"
+    data-day-name="{% trans 'Day name' %}"
+    data-minutes="{% trans 'min' %}"
+    data-seconds="{% trans 'sec' %}"
+    data-kilograms="{% trans 'kg' %}"
+    data-rest-short="{% trans 'sec rest' %}"
+    data-workout-program="{% trans 'Workout program' %}"
+  ></div>
+  {{ builder_data|json_script:"builder-data" }}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'js/workout-builder.js' %}" defer></script>
+{% endblock %}

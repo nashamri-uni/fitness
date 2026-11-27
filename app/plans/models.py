@@ -4,6 +4,28 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+class WorkoutProgram(models.Model):
+    """A user-owned collection of reusable workout days."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="workout_programs",
+        db_column="User_ID",
+    )
+    name = models.CharField(max_length=120, db_column="Name", verbose_name=_("Name"))
+    created_at = models.DateTimeField(auto_now_add=True, db_column="Created_At", verbose_name=_("Created at"))
+    updated_at = models.DateTimeField(auto_now=True, db_column="Updated_At", verbose_name=_("Updated at"))
+
+    class Meta:
+        ordering = ["-updated_at", "id"]
+        verbose_name = _("workout program")
+        verbose_name_plural = _("workout programs")
+
+    def __str__(self):
+        return self.name
+
+
 class WorkoutPlan(models.Model):
     """The WorkoutPlan table: a reusable workout plan owned by a user."""
 
@@ -18,6 +40,13 @@ class WorkoutPlan(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="plans", db_column="User_ID"
     )
+    program = models.ForeignKey(
+        WorkoutProgram,
+        on_delete=models.CASCADE,
+        related_name="days",
+        db_column="Program_ID",
+    )
+    program_order = models.PositiveIntegerField(default=1, db_column="Program_Order", verbose_name=_("Day order"))
     name = models.CharField(max_length=120, db_column="Name", verbose_name=_("Name"))
     description = models.TextField(blank=True, db_column="Description", verbose_name=_("Description"))
     goal = models.CharField(max_length=20, choices=Goal.choices, default=Goal.STRENGTH, db_column="Goal", verbose_name=_("Goal"))
@@ -28,9 +57,20 @@ class WorkoutPlan(models.Model):
     updated_at = models.DateTimeField(auto_now=True, db_column="Updated_At", verbose_name=_("Updated at"))
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["program_order", "id"]
         verbose_name = _("workout plan")
         verbose_name_plural = _("workout plans")
+
+    def save(self, *args, **kwargs):
+        if self.program_id is None and self.user_id:
+            program, _created = WorkoutProgram.objects.get_or_create(
+                user_id=self.user_id,
+                name="My Program",
+            )
+            self.program = program
+            if self.pk is None:
+                self.program_order = program.days.count() + 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name

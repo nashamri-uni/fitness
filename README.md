@@ -16,7 +16,7 @@ system with a custom user model.
 |---|---|
 | Accounts | Register / login / logout, fitness profile (date of birth, height, weight, fitness goal) |
 | Exercise library | Browse, search and filter exercises by muscle group, equipment, type and difficulty |
-| Workout plans | Create plans of exercises with target sets, reps, weight, duration and rest time |
+| Workout programs | Build custom programs from freely named and ordered workout days; add exercises, sets, reps, weight, duration and rest |
 | Training sessions | Start a session from a plan, log each set live, finish with duration / rating / notes |
 | Personal records | Every logged set is checked against your best `max_weight`, `max_reps`, `max_volume`, `max_duration` |
 | Analytics | Summary cards, weekly training volume chart, improvement metrics (first value vs. current best), training streak |
@@ -143,7 +143,7 @@ fitness/
 │   ├── config/         settings, root URLs (incl. /i18n/setlang/), WSGI/ASGI
 │   ├── accounts/       User + UserProfile, register / login / logout / profile
 │   ├── exercises/      MuscleGroup, Equipment, Exercise + library and admin CRUD, seed_data
-│   ├── plans/          WorkoutPlan, PlanExercise, PlanSet
+│   ├── plans/          WorkoutProgram, WorkoutPlan (workout day), PlanExercise, PlanSet
 │   ├── workouts/       WorkoutSession, SessionExercise, SessionSet, PersonalRecord, seed_demo
 │   ├── analytics/      summary, weekly volume, improvement metrics, dashboard / progress views
 │   ├── templates/      base.html + per-app templates + form field partial
@@ -166,7 +166,7 @@ Database tables and columns mirror the schema in Chapter 3 of the design report 
 | Auth | `/accounts/register/`, `/accounts/login/`, `/accounts/logout/`, `/accounts/profile/` |
 | Exercise library | `/exercises/` (search + filters), `/exercises/<id>/` |
 | Exercise administration | `/exercises/manage/` (administrators only) + `/admin/` |
-| Plans | `/plans/`, `/plans/new/`, `/plans/<id>/`, edit / delete, set editing |
+| Plans | `/plans/`, `/plans/new/`, `/plans/<id>/` (builder), save program, edit / delete |
 | Sessions | `/sessions/`, `/sessions/start/<plan>/`, `/sessions/<id>/`, log set, complete |
 | Personal records | `/sessions/records/` |
 | Analytics | `/analytics/`, `/analytics/progress/` |
@@ -176,6 +176,10 @@ Database tables and columns mirror the schema in Chapter 3 of the design report 
 
 ## Key logic
 
+- **Workout Builder** (`app/plans/`): `WorkoutProgram` groups the existing `WorkoutPlan` day records.
+  The migration groups existing plans per owner without changing plan, exercise, set, or session IDs.
+  Builder edits are validated and saved atomically; exercise/set order is generated automatically, and
+  removed workout days do not erase recorded session history.
 - **Personal records** (`app/workouts/services.py:evaluate_personal_record`): every logged set is
   compared with the user's stored best for `max_weight`, `max_reps`, `max_volume` and `max_duration`;
   an improved metric updates `PersonalRecord` and flags `SessionSet.Is_Personal_Record`.

@@ -8,6 +8,21 @@ from exercises.models import Exercise
 from .models import PlanExercise, PlanSet, WorkoutPlan
 
 
+class CreateWorkoutProgramForm(forms.Form):
+    program_name = forms.CharField(max_length=120, label=_("Program name"), initial=_("My program"))
+    name = forms.CharField(max_length=120, label=_("First workout day"), initial=_("Day 1"))
+    description = forms.CharField(
+        required=False,
+        label=_("Description"),
+        widget=forms.Textarea(attrs={"rows": 3}),
+    )
+    estimated_duration_minutes = forms.IntegerField(
+        min_value=1,
+        initial=45,
+        label=_("Estimated duration (minutes)"),
+    )
+
+
 CARDIO_CONDITIONING_EXERCISES = (
     "Push-up",
     "Plank",
@@ -31,7 +46,7 @@ def available_exercises_for_plan(plan):
 class WorkoutPlanForm(forms.ModelForm):
     class Meta:
         model = WorkoutPlan
-        fields = ["name", "description", "goal", "estimated_duration_minutes"]
+        fields = ["name", "description", "estimated_duration_minutes"]
 
 
 class AddExerciseForm(forms.Form):

@@ -6,6 +6,7 @@
 {% block content %}
 <div class="card" style="max-width: 640px;">
   <h2>{{ action }}</h2>
+  <p class="muted">{% trans "Build a custom program with your own workout days—no training split required." %}</p>
   <form method="post">
     {% csrf_token %}
     {% include "partials/form_fields.html" %}
