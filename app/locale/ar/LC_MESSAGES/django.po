@@ -776,6 +776,14 @@ msgstr "الإدارة"
 msgid "Language"
 msgstr "اللغة"
 
+#: templates/base.html
+msgid "Switch to dark mode"
+msgstr "التبديل إلى الوضع الداكن"
+
+#: templates/base.html
+msgid "Switch to light mode"
+msgstr "التبديل إلى الوضع الفاتح"
+
 #: templates/base.html:42
 msgid "Switch"
 msgstr "تغيير"

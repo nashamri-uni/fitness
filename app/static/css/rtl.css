@@ -8,11 +8,6 @@
   text-align: right;
 }
 
-[dir="rtl"] .user-area {
-  margin-left: 0;
-  margin-right: auto;
-}
-
 [dir="rtl"] .filters > div,
 [dir="rtl"] .form-actions {
   direction: rtl;

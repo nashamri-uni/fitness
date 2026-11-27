@@ -148,17 +148,31 @@ class LanguageTests(TestCase):
         self.assertIn("الملف الشخصي", html)
         self.assertIn("css/rtl.css", html)
         self.assertIn("الهدف الأسبوعي للتمرين (أيام)", html)
+        self.assertIn('data-label-light="التبديل إلى الوضع الداكن"', html)
+        self.assertIn('data-label-dark="التبديل إلى الوضع الفاتح"', html)
         register_response = self.client.get(reverse("accounts:register"))
         self.assertContains(register_response, "لم يتم تحديد هدف")
 
-    def test_language_dropdown_is_an_auto_submit_form(self):
-        """Issue #1: the dropdown applies the language itself, no Switch click."""
+    def test_language_menu_uses_the_django_language_switch_form(self):
+        """The globe menu submits the Django language-switch form."""
         user = User.objects.create_user(username="amina", email="amina@example.com", password="pw12345678")
         self.client.login(username="amina", password="pw12345678")
 
         html = self.client.get(reverse("accounts:profile")).content.decode()
         self.assertIn('class="inline-form language-switcher" data-auto-submit', html)
+        self.assertIn('method="post" action="/i18n/setlang/"', html)
+        self.assertIn('class="language-trigger"', html)
+        self.assertIn('aria-haspopup="menu"', html)
+        self.assertIn('class="language-menu" id="language-dropdown-menu" role="menu" hidden', html)
+        self.assertIn('data-language="en"', html)
+        self.assertIn('data-language="ar"', html)
+        self.assertIn('role="menuitemradio"', html)
+        self.assertIn('aria-checked="true"', html)
+        self.assertIn('data-language-value disabled', html)
+        self.assertIn('name="csrfmiddlewaretoken"', html)
         self.assertIn('name="language"', html)
+        self.assertIn('value="en" selected', html)
+        self.assertIn('value="ar"', html)
 
         app_js = (settings.BASE_DIR / "static" / "js" / "app.js").read_text(encoding="utf-8")
         self.assertIn("setupLanguageSwitcher", app_js)
