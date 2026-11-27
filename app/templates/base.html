@@ -12,16 +12,18 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static 'css/rtl.css' %}">{% endif %}
   {% block styles %}{% endblock %}
+  {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
-    <div class="container header-inner">
+    <div class="container header-inner{% block header_class %}{% endblock %}">
       <a class="brand" href="{% url 'analytics:dashboard' %}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M6.5 7v10M17.5 7v10M3.5 9v6M20.5 9v6M6.5 12h11M3.5 12h3m11 0h3"/>
         </svg>
         <span>{% trans "FitPlanner" %}</span>
       </a>
+      {% block primary_navigation %}
       {% with current_namespace=request.resolver_match.namespace current_view=request.resolver_match.url_name %}
       <nav class="nav">
         <a class="nav-link" href="{% url 'analytics:dashboard' %}"{% if current_namespace == 'analytics' and current_view == 'dashboard' %} aria-current="page"{% endif %}>
@@ -50,6 +52,7 @@
         </a>
       </nav>
       {% endwith %}
+      {% endblock %}
 
       <div class="header-controls">
         <form method="post" action="{% url 'set_language' %}" class="inline-form language-switcher" data-auto-submit>
@@ -168,17 +171,25 @@
               </div>
             </div>
           {% else %}
+            {% block authentication_header_links %}
             <div class="header-auth-links">
-              <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
-              <a href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
+              {% if request.resolver_match.url_name == 'login' %}
+                <a href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
+              {% elif request.resolver_match.url_name == 'register' %}
+                <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
+              {% else %}
+                <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>
+                <a href="{% url 'accounts:register' %}">{% trans "Register" %}</a>
+              {% endif %}
             </div>
+            {% endblock %}
           {% endif %}
         </div>
       </div>
     </div>
   </header>
 
-  <main class="container">
+  <main class="container{% block main_class %}{% endblock %}">
     {% if messages %}
       <ul class="messages">
         {% for message in messages %}
