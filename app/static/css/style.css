@@ -300,6 +300,14 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 .tag-pr { background: #ecfdf5; color: #065f46; }
 .pill { display: inline-block; padding: .2rem .6rem; border-radius: 999px; background: #f3f4f6; font-size: .85rem; }
 .chart { max-width: 100%; }
+.activity-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: .5rem; margin-bottom: 1rem; }
+.activity-mode-toggle { display: inline-flex; gap: .2rem; }
+.activity-mode-toggle button[aria-pressed="true"] { background: var(--accent-dark); }
+.activity-week-picker { display: flex; flex: 0 0 100%; align-items: end; gap: .5rem; }
+.activity-week-picker[hidden] { display: none; }
+.activity-week-picker label { margin: 0; }
+.activity-week-picker select { width: auto; min-width: 10rem; max-width: 13rem; }
+.activity-chart-wrap { position: relative; width: 100%; height: 300px; margin: .25rem 0 1rem; }
 .empty { padding: 1.5rem; text-align: center; color: var(--muted); }
 .pagination { display: flex; gap: .5rem; margin-top: 1rem; }
 .site-footer { padding: 1rem 0 2rem; color: var(--muted); font-size: .85rem; }
@@ -312,6 +320,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   .stat .value { font-size: 1.3rem; }
   th, td { padding: .4rem; font-size: .9rem; }
   .plan-search > div:first-child { flex-basis: 100%; }
+  .activity-week-picker { flex: 1 1 100%; align-items: stretch; flex-direction: column; }
+  .activity-week-picker select { width: 100%; min-width: 0; max-width: none; }
+  .activity-chart-wrap { height: 250px; }
 }
 
 

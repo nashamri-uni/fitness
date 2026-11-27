@@ -4,7 +4,13 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from .services import exercise_progress, recent_personal_records, summary, weekly_volume
+from .services import (
+    exercise_progress,
+    recent_personal_records,
+    summary,
+    weekly_volume,
+    workout_activity,
+)
 
 
 @login_required
@@ -23,6 +29,7 @@ def dashboard(request):
         "stats": stats,
         "chart": chart,
         "chart_json": json.dumps(chart),
+        "activity": workout_activity(request.user),
         "progress": progress,
         "records": records,
         "recent_sessions": recent_sessions,
