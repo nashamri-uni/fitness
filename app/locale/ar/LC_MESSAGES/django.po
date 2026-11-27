@@ -1599,20 +1599,20 @@ msgstr "البرامج"
 
 msgid "%(day_count)s workout day"
 msgid_plural "%(day_count)s workout days"
-msgstr[0] "%(day_count)s أيام تدريب"
+msgstr[0] "لا أيام تدريب"
 msgstr[1] "%(day_count)s يوم تدريب"
-msgstr[2] "%(day_count)s يوم تدريب"
+msgstr[2] "يوما تدريب"
 msgstr[3] "%(day_count)s أيام تدريب"
-msgstr[4] "%(day_count)s يوم تدريب"
+msgstr[4] "%(day_count)s يومًا تدريبيًا"
 msgstr[5] "%(day_count)s يوم تدريب"
 
 msgid "%(exercise_count)s exercise"
 msgid_plural "%(exercise_count)s exercises"
-msgstr[0] "%(exercise_count)s تمارين"
+msgstr[0] "لا تمارين"
 msgstr[1] "%(exercise_count)s تمرين"
-msgstr[2] "%(exercise_count)s تمرين"
+msgstr[2] "تمرينان"
 msgstr[3] "%(exercise_count)s تمارين"
-msgstr[4] "%(exercise_count)s تمرين"
+msgstr[4] "%(exercise_count)s تمرينًا"
 msgstr[5] "%(exercise_count)s تمرين"
 
 msgid "Program settings"
@@ -1729,3 +1729,324 @@ msgstr "ث. راحة"
 msgid "kg"
 msgstr "كجم"
 
+
+#: templates/workouts/active_session.html:144
+msgid "Actual performance from your previous completed workout"
+msgstr "أداؤك الفعلي في آخر تمرين مكتمل"
+
+#: templates/workouts/active_session.html:89
+msgid "Add 15 seconds"
+msgstr "إضافة ١٥ ثانية"
+
+#: templates/workouts/active_session.html:50
+msgid "Additional weight"
+msgstr "وزن إضافي"
+
+#: templates/workouts/active_session.html:147
+msgid "Complete set"
+msgstr "إكمال المجموعة"
+
+#: templates/workouts/session_detail.html:17
+msgid "Completed exercises"
+msgstr "التمارين المكتملة"
+
+#: templates/workouts/session_detail.html:18
+msgid "Completed sets"
+msgstr "المجموعات المكتملة"
+
+#: templates/workouts/active_session.html:151
+msgid "Could not save. Your inputs are still here. Try again."
+msgstr "تعذّر الحفظ. ما زالت مدخلاتك موجودة. حاول مجددًا."
+
+#: templates/workouts/active_session.html:147
+msgid "Edit completed set"
+msgstr "تعديل المجموعة المكتملة"
+
+#: templates/workouts/active_session.html:16
+msgid "Elapsed"
+msgstr "الوقت المنقضي"
+
+#: workouts/forms.py:26
+msgid "Enter a weight between 0 and 10,000 kg."
+msgstr "أدخل وزنًا بين ٠ و١٠٬٠٠٠ كجم."
+
+#: templates/workouts/active_session.html:158
+msgid "Finish anyway"
+msgstr "إنهاء التمرين"
+
+#: templates/workouts/active_session.html:18 templates/workouts/active_session.html:119 templates/workouts/active_session.html:137 templates/workouts/active_session.html:159
+msgid "Finish workout"
+msgstr "إنهاء التمرين"
+
+#: templates/workouts/active_session.html:143
+msgid "Interval"
+msgstr "الفترة"
+
+#: templates/workouts/active_session.html:136
+msgid "Keep training"
+msgstr "متابعة التدريب"
+
+#: templates/workouts/active_session.html:152
+msgid "New personal record!"
+msgstr "رقم شخصي جديد!"
+
+#: templates/workouts/active_session.html:75
+msgid "No exercises in this workout."
+msgstr "لا توجد تمارين في هذا التدريب."
+
+#: templates/workouts/active_session.html:60
+msgid "No rest"
+msgstr "بدون راحة"
+
+#: templates/workouts/active_session.html:126
+msgid "Notes (optional)"
+msgstr "ملاحظات (اختياري)"
+
+#: templates/workouts/active_session.html:90 templates/workouts/active_session.html:155
+msgid "Pause"
+msgstr "إيقاف مؤقت"
+
+#: workouts/forms.py:32
+msgid "RPE must be between 1 and 10."
+msgstr "يجب أن يكون الجهد المُدرَك بين ١ و١٠."
+
+#: templates/workouts/active_session.html:128
+msgid "Rating (optional)"
+msgstr "التقييم (اختياري)"
+
+#: workouts/forms.py:44
+msgid "Rating must be between 1 and 5."
+msgstr "يجب أن يكون التقييم بين ١ و٥."
+
+#: templates/workouts/active_session.html:60
+msgid "Rest"
+msgstr "راحة"
+
+#: templates/workouts/active_session.html:82 templates/workouts/active_session.html:82
+msgid "Rest alert"
+msgstr "تنبيه انتهاء الراحة"
+
+#: templates/workouts/active_session.html:155
+msgid "Rest complete"
+msgstr "انتهت الراحة"
+
+#: templates/workouts/active_session.html:81
+msgid "Rest timer"
+msgstr "مؤقّت الراحة"
+
+#: templates/workouts/active_session.html:155
+msgid "Resume"
+msgstr "استئناف"
+
+#: templates/workouts/active_session.html:148
+msgid "Save set changes"
+msgstr "حفظ تعديلات المجموعة"
+
+#: templates/workouts/active_session.html:146
+msgid "Seconds"
+msgstr "ثوانٍ"
+
+#: templates/workouts/active_session.html:149
+msgid "Set logged"
+msgstr "تم تسجيل المجموعة"
+
+#: workouts/forms.py:20
+msgid "Set numbers start at 1."
+msgstr "يبدأ ترقيم المجموعات من ١."
+
+#: templates/workouts/active_session.html:150
+msgid "Set undone"
+msgstr "تم التراجع عن المجموعة"
+
+#: templates/workouts/active_session.html:149
+msgid "Set updated"
+msgstr "تم تحديث المجموعة"
+
+#: templates/workouts/active_session.html:48
+msgid "Show RPE"
+msgstr "عرض الجهد المُدرَك"
+
+#: templates/workouts/active_session.html:91
+msgid "Skip"
+msgstr "تخطي"
+
+#: templates/workouts/active_session.html:125
+msgid "Some planned sets are incomplete. You can still finish and keep the sets you logged."
+msgstr "لم تكتمل بعض المجموعات المخططة. يمكنك إنهاء التمرين مع الاحتفاظ بالمجموعات المسجّلة."
+
+#: workouts/views.py:166
+msgid "Some planned sets remain. Confirm to finish this workout."
+msgstr "تبقّت مجموعات مخططة. أكّد رغبتك في إنهاء التمرين."
+
+#: templates/workouts/active_session.html:156
+msgid "Start duration timer"
+msgstr "بدء مؤقّت التمرين"
+
+#: templates/workouts/active_session.html:84
+msgid "Starts after you log a set with rest."
+msgstr "يبدأ بعد تسجيل مجموعة لها فترة راحة."
+
+#: templates/workouts/active_session.html:156
+msgid "Stop duration timer"
+msgstr "إيقاف مؤقّت التمرين"
+
+#: templates/workouts/active_session.html:88
+msgid "Subtract 15 seconds"
+msgstr "طرح ١٥ ثانية"
+
+#: workouts/views.py:106 workouts/views.py:111
+msgid "This set is no longer available."
+msgstr "لم تعد هذه المجموعة متاحة."
+
+#: workouts/views.py:130
+msgid "This set was already logged. Refresh to see the saved values."
+msgstr "سُجّلت هذه المجموعة بالفعل. حدّث الصفحة لرؤية القيم المحفوظة."
+
+#: workouts/views.py:101
+msgid "This workout is already finished."
+msgstr "انتهى هذا التمرين بالفعل."
+
+#: templates/workouts/session_detail.html:20
+msgid "Timed work"
+msgstr "وقت التمرين المؤقّت"
+
+#: templates/workouts/active_session.html:148
+msgid "Undo completed set"
+msgstr "التراجع عن المجموعة المكتملة"
+
+#: workouts/views.py:98
+msgid "Unknown set action."
+msgstr "إجراء غير معروف للمجموعة."
+
+#: templates/workouts/active_session.html:153
+msgid "Upcoming"
+msgstr "التالي"
+
+#: templates/workouts/session_detail.html:11
+msgid "Workout complete"
+msgstr "اكتمل التمرين"
+
+#: templates/workouts/active_session.html:24
+msgid "Workout progress"
+msgstr "تقدّم التمرين"
+
+#: workouts/models.py:65
+msgid "Workout targets"
+msgstr "أهداف التمرين"
+
+msgid "A workout day or exercise could not be found."
+msgstr "تعذّر العثور على يوم التمرين أو التمرين."
+
+msgid "Apply"
+msgstr "تطبيق"
+
+msgid "Apply or cancel the changes in this editor first."
+msgstr "طبّق التغييرات في هذا المحرّر أو ألغها أولًا."
+
+msgid "Build a custom program with your own workout days—no training split required."
+msgstr "أنشئ برنامجًا مخصصًا بأيام تمرين من اختيارك دون تقيد بتقسيم محدد."
+
+msgid "Build muscle with resistance training."
+msgstr "ابنِ العضلات بتمارين المقاومة."
+
+msgid "Cardio only"
+msgstr "تمارين الكارديو فقط"
+
+msgid "Check the numbers and planned sets before saving."
+msgstr "راجع الأرقام والمجموعات المخططة قبل الحفظ."
+
+msgid "Combine strength work and conditioning."
+msgstr "اجمع بين تمارين القوة واللياقة."
+
+msgid "Conditioning"
+msgstr "تمارين اللياقة"
+
+msgid "Day 1"
+msgstr "اليوم الأول"
+
+msgid "Day order"
+msgstr "ترتيب اليوم"
+
+msgid "Delete additional set"
+msgstr "حذف المجموعة الإضافية"
+
+msgid "Delete this additional set?"
+msgstr "هل تريد حذف هذه المجموعة الإضافية؟"
+
+msgid "Each exercise needs at least one planned set."
+msgstr "يحتاج كل تمرين إلى مجموعة مخططة واحدة على الأقل."
+
+msgid "Edit program name"
+msgstr "تعديل اسم البرنامج"
+
+msgid "Enter a name of 120 characters or fewer."
+msgstr "أدخل اسمًا لا يتجاوز ١٢٠ حرفًا."
+
+msgid "Enter a valid number within the allowed range."
+msgstr "أدخل رقمًا صحيحًا ضمن النطاق المسموح."
+
+msgid "Enter an estimated duration in whole minutes, starting at 1."
+msgstr "أدخل المدة المتوقعة بالدقائق الصحيحة، بدءًا من دقيقة واحدة."
+
+msgid "Goals by workout day"
+msgstr "الأهداف حسب يوم التمرين"
+
+msgid "Hypertrophy — Muscle Gain"
+msgstr "التضخيم — بناء العضلات"
+
+msgid "Improve cardiovascular fitness."
+msgstr "حسّن لياقة القلب والتنفس."
+
+msgid "Improve the load you can lift."
+msgstr "زِد قدرتك على رفع الأوزان."
+
+msgid "Invalid set data."
+msgstr "بيانات المجموعة غير صالحة."
+
+msgid "Maintain your current fitness."
+msgstr "حافظ على مستوى لياقتك الحالي."
+
+msgid "Remove %(exercise)s from %(day)s before switching to Cardio."
+msgstr "أزل %(exercise)s من %(day)s قبل التبديل إلى هدف الكارديو."
+
+msgid "Remove these exercises from their workout days before switching to Cardio."
+msgstr "أزل هذه التمارين من أيامها قبل التبديل إلى هدف الكارديو."
+
+msgid "Select a valid training goal."
+msgstr "اختر هدفًا تدريبيًا صالحًا."
+
+msgid "Set actions"
+msgstr "إجراءات المجموعة"
+
+msgid "Sustain effort over longer workouts."
+msgstr "حافظ على أدائك خلال التمارين الأطول."
+
+msgid "This program changed elsewhere. Reload before saving again."
+msgstr "تغيّر هذا البرنامج في نافذة أخرى. حدّث الصفحة قبل الحفظ مجددًا."
+
+msgid "Training goal"
+msgstr "هدف التدريب"
+
+msgid "Use Save program to keep applied changes."
+msgstr "استخدم «حفظ البرنامج» لحفظ التغييرات التي طبّقتها."
+
+msgid "Selected exercises"
+msgstr "التمارين المحددة"
+
+msgid "%(minutes)s planned minute"
+msgid_plural "%(minutes)s planned minutes"
+msgstr[0] "لا وقت مخطط"
+msgstr[1] "دقيقة مخططة واحدة"
+msgstr[2] "دقيقتان مخططتان"
+msgstr[3] "%(minutes)s دقائق مخططة"
+msgstr[4] "%(minutes)s دقيقة مخططة"
+msgstr[5] "%(minutes)s دقيقة مخططة"
+
+msgid "%(available)s exercise available"
+msgid_plural "%(available)s exercises available"
+msgstr[0] "لا تمارين متاحة"
+msgstr[1] "تمرين واحد متاح"
+msgstr[2] "تمرينان متاحان"
+msgstr[3] "%(available)s تمارين متاحة"
+msgstr[4] "%(available)s تمرينًا متاحًا"
+msgstr[5] "%(available)s تمرين متاح"

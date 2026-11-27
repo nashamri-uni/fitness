@@ -12,7 +12,8 @@ from exercises.management.commands.seed_data import EXERCISE_IMAGES
 from exercises.models import Equipment, Exercise, ExerciseEquipment, ExerciseMuscleGroup, MuscleGroup
 from .forms import AddExerciseForm
 
-from .models import PlanExercise, PlanSet, WorkoutPlan
+from .models import PlanExercise, PlanSet, WorkoutPlan, WorkoutProgram
+from .views import program_revision
 
 
 class PlanTests(TestCase):
@@ -31,9 +32,10 @@ class PlanTests(TestCase):
         return WorkoutPlan.objects.create(user=self.user, name="Push Day", goal="hypertrophy")
 
     def save_builder(self, program, payload):
+        revision = program_revision(WorkoutProgram.objects.get(pk=program.pk))
         return self.client.post(
             reverse("plans:save_program", args=[program.pk]),
-            data=json.dumps(payload),
+            data=json.dumps({"revision": revision, **payload}),
             content_type="application/json",
         )
 
@@ -224,6 +226,7 @@ class PlanTests(TestCase):
             reverse("plans:create"),
             {
                 "program_name": "Push Program",
+                "goal": "hypertrophy",
                 "name": "Push Day",
                 "description": "",
                 "estimated_duration_minutes": 40,
@@ -234,13 +237,101 @@ class PlanTests(TestCase):
         self.assertEqual(plan.user, self.user)
         self.assertEqual(plan.program.name, "Push Program")
         self.assertEqual(plan.program_order, 1)
+        self.assertEqual(plan.program.goal, "hypertrophy")
+        self.assertEqual(plan.goal, "hypertrophy")
 
     def test_create_program_form_does_not_require_a_training_split(self):
         response = self.client.get(reverse("plans:create"))
 
         self.assertContains(response, 'name="program_name"')
         self.assertContains(response, 'name="name"')
-        self.assertNotContains(response, 'name="goal"')
+        self.assertContains(response, 'name="goal"', count=6)
+        self.assertNotContains(response, 'name="split"')
+
+    def test_program_creation_requires_one_of_the_six_goals(self):
+        common = {"program_name": "Goal", "name": "Day", "estimated_duration_minutes": 40}
+        url = reverse("plans:create")
+        self.assertEqual(self.client.post(url, common).status_code, 200)
+        self.assertEqual(self.client.post(url, {**common, "goal": "other"}).status_code, 200)
+        self.assertFalse(WorkoutProgram.objects.exists())
+        for goal, _ in WorkoutPlan.Goal.choices:
+            with self.subTest(goal=goal):
+                response = self.client.post(url, {**common, "goal": goal})
+                self.assertEqual(response.status_code, 302)
+                program = WorkoutProgram.objects.get(goal=goal)
+                self.assertEqual(program.days.get().goal, goal)
+                day = WorkoutPlan.objects.create(user=self.user, program=program, name="Next")
+                self.assertEqual(day.goal, goal)
+
+    def test_cardio_draft_inheritance_and_forged_new_day_exercises(self):
+        program = WorkoutProgram.objects.create(user=self.user, name="Cardio", goal="cardio")
+        bench = Exercise.objects.create(name="Bench Press")
+        url = reverse("plans:program_builder", args=[program.pk])
+        initial = self.client.get(url, {"new_day": 1}).context["builder_data"]
+        self.assertEqual(initial["program"]["goal"], "cardio")
+        self.assertIn(self.exercise.pk, initial["cardio_ids"])
+        self.assertNotIn(bench.pk, initial["cardio_ids"])
+        entry = {"exercise_id": bench.pk, "rest_seconds": 0, "sets": [
+            {"reps": 10, "weight_kg": 0, "duration_seconds": 0},
+        ]}
+        day = {"id": None, "client_key": "new", "name": "New day", "estimated_duration_minutes": 30,
+               "goal": "strength", "exercises": [entry]}
+        self.assertEqual(self.save_builder(program, {"name": "Cardio", "days": [day]}).status_code, 400)
+        self.assertFalse(program.days.exists())
+        entry["exercise_id"] = self.exercise.pk
+        self.assertEqual(self.save_builder(program, {"name": "Cardio", "days": [day]}).status_code, 200)
+        self.assertEqual(program.days.get().goal, "cardio")
+
+    def test_switching_to_cardio_requires_explicit_conflict_resolution(self):
+        program = WorkoutProgram.objects.create(user=self.user, name="Training", goal="strength")
+        day = WorkoutPlan.objects.create(user=self.user, name="Lifting", program=program)
+        bench = Exercise.objects.create(name="Bench Press")
+        entry = PlanExercise.objects.create(plan=day, exercise=bench)
+        planned = PlanSet.objects.create(plan_exercise=entry)
+        saved = self.client.get(reverse("plans:detail", args=[day.pk])).context["builder_data"]["days"][0]
+        saved["client_key"] = "saved"
+        payload = {"name": program.name, "goal": "cardio", "days": [saved]}
+
+        response = self.save_builder(program, payload)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Bench Press", response.json()["error"])
+        program.refresh_from_db()
+        self.assertEqual(program.goal, "strength")
+        self.assertTrue(PlanSet.objects.filter(pk=planned.pk).exists())
+        saved["exercises"] = []
+        self.assertEqual(self.save_builder(program, payload).status_code, 200)
+        day.refresh_from_db()
+        self.assertEqual(day.goal, "cardio")
+
+    def test_stale_builder_save_preserves_a_newer_day_and_normalized_names(self):
+        plan = self.create_plan()
+        stale_revision = program_revision(plan.program)
+        initial_day = {"id": plan.pk, "client_key": "initial", "name": "  Renamed  ",
+                       "description": "Notes", "estimated_duration_minutes": 35, "exercises": []}
+        new_day = {**initial_day, "id": None, "client_key": "new", "name": "Extra day"}
+        response = self.save_builder(plan.program, {"name": "  New title  ", "days": [initial_day, new_day]})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["program_name"], "New title")
+        self.assertEqual(response.json()["records"]["initial"]["name"], "Renamed")
+        stale = {"revision": stale_revision, "name": "Old copy", "days": [initial_day]}
+        self.assertEqual(self.save_builder(plan.program, stale).status_code, 409)
+        self.assertEqual(plan.program.days.count(), 2)
+
+    def test_builder_rejects_empty_new_exercise_set_list(self):
+        plan = self.create_plan()
+        exercise = {"exercise_id": self.exercise.pk, "rest_seconds": 0, "sets": []}
+        days = [{"id": plan.pk, "client_key": "day", "name": plan.name,
+                 "estimated_duration_minutes": 40, "exercises": [exercise]}]
+        self.assertEqual(self.save_builder(plan.program, {"name": plan.program.name, "days": days}).status_code, 400)
+        self.assertFalse(plan.exercises.exists())
+
+    def test_legacy_route_cannot_remove_the_last_planned_set(self):
+        plan = self.create_plan()
+        entry = PlanExercise.objects.create(plan=plan, exercise=self.exercise)
+        item = PlanSet.objects.create(plan_exercise=entry)
+        self.assertRedirects(self.client.post(reverse("plans:delete_set", args=[item.pk])),
+                             reverse("plans:detail", args=[plan.pk]))
+        self.assertTrue(entry.sets.filter(pk=item.pk).exists())
 
     def test_builder_saves_multiple_days_exercises_custom_sets_and_zero_rest(self):
         plan = self.create_plan()
@@ -508,12 +599,11 @@ class PlanTests(TestCase):
         cardio_category = next(category for category in categories if category["key"] == "cardio")
         self.assertEqual(
             {exercise.name for exercise in cardio_category["exercises"]},
-            set(cardio_names),
+            {"Treadmill", "Elliptical Machine", "Stationary Bike", "Rowing Machine"},
         )
-        free_category = next(category for category in categories if category["key"] == "other")
         self.assertEqual(
-            {exercise.name for exercise in free_category["exercises"]},
-            {"Push-up", "Plank"},
+            {exercise.name for exercise in cardio_category["groups"][0]["exercises"]},
+            {"Push-up", "Plank", "Burpee", "Jumping Jack", "Mountain Climber", "High Knees Lift Run"},
         )
         self.assertEqual(plank.exercise_type, Exercise.ExerciseType.STRENGTH)
         self.assertEqual(
@@ -716,6 +806,42 @@ class PlanTests(TestCase):
         self.client.login(username="other", password="pw12345678")
         response = self.client.get(reverse("plans:detail", args=[plan.pk]))
         self.assertEqual(response.status_code, 404)
+
+
+class ProgramGoalMigrationTests(TransactionTestCase):
+    def tearDown(self):
+        executor = MigrationExecutor(connection)
+        executor.migrate(executor.loader.graph.leaf_nodes())
+        super().tearDown()
+
+    def test_consistent_goals_are_derived_and_mixed_goals_survive_reversal(self):
+        old = [("plans", "0002_workoutprogram_and_day_order")]
+        new = [("plans", "0003_workoutprogram_goal")]
+        executor = MigrationExecutor(connection)
+        executor.migrate(old)
+        apps = executor.loader.project_state(old).apps
+        user = apps.get_model("accounts", "User").objects.create(username="legacy-goals")
+        Program = apps.get_model("plans", "WorkoutProgram")
+        Day = apps.get_model("plans", "WorkoutPlan")
+        consistent = Program.objects.create(user=user, name="Consistent")
+        mixed = Program.objects.create(user=user, name="Mixed")
+        empty = Program.objects.create(user=user, name="Empty")
+        Day.objects.create(user=user, program=consistent, name="Run", goal="cardio")
+        Day.objects.create(user=user, program=mixed, name="Lift", goal="strength")
+        Day.objects.create(user=user, program=mixed, name="Condition", goal="cardio")
+        before = list(Day.objects.order_by("pk").values_list("pk", "program_id", "goal"))
+
+        executor = MigrationExecutor(connection)
+        executor.migrate(new)
+        migrated = executor.loader.project_state(new).apps
+        Program = migrated.get_model("plans", "WorkoutProgram")
+        self.assertEqual(Program.objects.get(pk=consistent.pk).goal, "cardio")
+        self.assertIsNone(Program.objects.get(pk=mixed.pk).goal)
+        self.assertIsNone(Program.objects.get(pk=empty.pk).goal)
+        executor = MigrationExecutor(connection)
+        executor.migrate(old)
+        Day = executor.loader.project_state(old).apps.get_model("plans", "WorkoutPlan")
+        self.assertEqual(list(Day.objects.order_by("pk").values_list("pk", "program_id", "goal")), before)
 
 
 class WorkoutProgramMigrationTests(TransactionTestCase):

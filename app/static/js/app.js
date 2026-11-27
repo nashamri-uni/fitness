@@ -153,6 +153,24 @@ function setupAccountDropdown() {
   });
 }
 
+function syncChartAppearance(chart) {
+  const update = () => {
+    const styles = getComputedStyle(document.documentElement);
+    const color = (token) => styles.getPropertyValue(token).trim();
+    chart.data.datasets[0].backgroundColor = color("--accent");
+    for (const axis of ["x", "y"]) {
+      chart.options.scales[axis].grid.color = color("--border");
+      chart.options.scales[axis].ticks.color = color("--muted");
+    }
+    chart.options.plugins.legend.labels.color = color("--ink");
+    chart.options.scales.y.title.color = color("--ink");
+    chart.update("none");
+  };
+  update();
+  document.getElementById("theme-toggle")?.addEventListener("click", update);
+  document.fonts?.ready.then(update);
+}
+
 function setupActivityChart() {
   const canvas = document.getElementById("activity-chart");
   if (!canvas) return;
@@ -181,7 +199,9 @@ function setupActivityChart() {
 
   const locale = document.documentElement.lang || "en";
   const dateAtNoon = (value) => new Date(`${value}T12:00:00`);
-  const formatDate = (value, options) => new Intl.DateTimeFormat(locale, options).format(dateAtNoon(value));
+  const formatDate = (value, options) => new Intl.DateTimeFormat(locale, {
+    ...options, numberingSystem: "latn",
+  }).format(dateAtNoon(value));
   const formatWeek = (week) => (
     `${formatDate(week.start, { month: "short", day: "numeric", year: "numeric" })} – ` +
     formatDate(week.end, { month: "short", day: "numeric", year: "numeric" })
@@ -221,7 +241,7 @@ function setupActivityChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      locale,
+      locale: new Intl.Locale(locale, { numberingSystem: "latn" }).toString(),
       plugins: {
         legend: {
           display: true,
@@ -324,28 +344,15 @@ function setupActivityChart() {
   });
   select.addEventListener("change", updateChart);
 
-  const themeButton = document.getElementById("theme-toggle");
-  if (themeButton) {
-    themeButton.addEventListener("click", () => {
-      const currentStyles = getComputedStyle(document.documentElement);
-      chart.data.datasets[0].backgroundColor = currentStyles.getPropertyValue("--accent").trim();
-      chart.options.scales.x.grid.color = currentStyles.getPropertyValue("--border").trim();
-      chart.options.scales.y.grid.color = currentStyles.getPropertyValue("--border").trim();
-      chart.options.scales.x.ticks.color = currentStyles.getPropertyValue("--muted").trim();
-      chart.options.scales.y.ticks.color = currentStyles.getPropertyValue("--muted").trim();
-      chart.options.plugins.legend.labels.color = currentStyles.getPropertyValue("--ink").trim();
-      chart.options.scales.y.title.color = currentStyles.getPropertyValue("--ink").trim();
-      chart.update();
-    });
-  }
-
   updateChart();
+  syncChartAppearance(chart);
 }
 
 // Progress charts for the analytics dashboard (FREQ-12).
 document.addEventListener("DOMContentLoaded", () => {
   setupLanguageSwitcher();
   setupAccountDropdown();
+  if (typeof Chart !== "undefined") Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
   setupActivityChart();
 
   const canvas = document.getElementById("volume-chart");
@@ -375,7 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  new Chart(canvas, {
+  const chart = new Chart(canvas, {
     type: "bar",
     data: {
       labels: data.labels,
@@ -385,7 +392,8 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: true } },
+      locale: new Intl.Locale(document.documentElement.lang || "en", { numberingSystem: "latn" }).toString(),
+      plugins: { legend: { display: true, rtl: document.documentElement.dir === "rtl" } },
       scales: {
         y: {
           beginAtZero: true,
@@ -394,6 +402,7 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },
   });
+  syncChartAppearance(chart);
 });
 
 

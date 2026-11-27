@@ -4,12 +4,12 @@
 {% block title %}{% trans "Exercise Library" %} &middot; FitPlanner{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card exercise-library-filters">
   <h2>{% trans "Exercise Library" %}</h2>
-  <form method="get" class="filters">
+<form method="get" class="filters">
     <div>
       <label for="q">{% trans "Search" %}</label>
-      <input type="text" id="q" name="q" value="{{ selected.q }}" placeholder="{% trans 'Exercise name' %}">
+      <input type="search" id="q" name="q" value="{{ selected.q }}" placeholder="{% trans 'Exercise name' %}">
     </div>
     <div>
       <label for="muscle_group">{% trans "Muscle group" %}</label>

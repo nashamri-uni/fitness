@@ -4,12 +4,32 @@
 {% block title %}{{ action }} &middot; FitPlanner{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 640px;">
+<div class="card{% if goal_cards %} program-create-card{% endif %}" style="max-width: 640px;">
   <h2>{{ action }}</h2>
   <p class="muted">{% trans "Build a custom program with your own workout days—no training split required." %}</p>
   <form method="post">
     {% csrf_token %}
-    {% include "partials/form_fields.html" %}
+    {% if goal_cards %}
+      <fieldset class="program-goal-picker">
+        <legend>{{ form.goal.label }}</legend>
+        {{ form.goal.errors }}
+        <div class="program-goal-grid">
+          {% for option, icon, description in goal_cards %}
+            <label class="program-goal-card">
+              {{ option.tag }}
+              <span class="program-goal-icon" aria-hidden="true">{{ icon }}</span>
+              <span><strong>{% if option.data.value == 'hypertrophy' %}{% trans "Hypertrophy — Muscle Gain" %}{% else %}{{ option.choice_label }}{% endif %}</strong><small>{{ description }}</small></span>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      {{ form.program_name.as_field_group }}
+      {{ form.name.as_field_group }}
+      {{ form.description.as_field_group }}
+      {{ form.estimated_duration_minutes.as_field_group }}
+    {% else %}
+      {% include "partials/form_fields.html" %}
+    {% endif %}
     <div class="form-actions">
       <button type="submit">{% trans "Save" %}</button>
       <a class="btn btn-secondary" href="{% url 'plans:list' %}">{% trans "Cancel" %}</a>

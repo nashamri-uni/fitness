@@ -1,30 +1,35 @@
 """Workout plan views (UC-8 to UC-17)."""
+import hashlib
 import json
 import math
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.db.models import Prefetch, Q
+from django.db.models import F, Prefetch, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from django.utils.translation import gettext as _, gettext_lazy as _lazy
 
 from exercises.models import Exercise, ExerciseMuscleGroup
+from exercises.tracking import exercise_kind
 
 from .forms import (
     AddExerciseForm,
     CreateWorkoutProgramForm,
+    GOAL_DETAILS,
+    CARDIO_CONDITIONING_EXERCISES,
     PlanExerciseForm,
     PlanSetForm,
     WorkoutPlanForm,
+    available_exercises_for_goal,
     available_exercises_for_plan,
 )
-from .models import PlanExercise, PlanSet, WorkoutPlan, WorkoutProgram
+from .models import PlanExercise, PlanSet, TrainingGoal, WorkoutPlan, WorkoutProgram
 
 
-def _build_exercise_categories(exercises):
+def _build_exercise_categories(exercises, cardio_only=False):
     """Group available exercises once, preferring their primary muscle mapping."""
     category_definitions = (
         ("upper", _lazy("Upper body")),
@@ -44,7 +49,14 @@ def _build_exercise_categories(exercises):
             links[0] if links else None,
         )
 
-        if exercise.exercise_type == Exercise.ExerciseType.CARDIO:
+        if cardio_only and exercise.name in CARDIO_CONDITIONING_EXERCISES:
+            category = categories["cardio"]
+            category["groups"].setdefault("conditioning", {
+                "name": _("Conditioning"), "exercises": [],
+            })["exercises"].append(exercise)
+            category["exercise_count"] += 1
+            continue
+        if exercise.exercise_type == Exercise.ExerciseType.CARDIO or cardio_only:
             category_key = "cardio"
         elif muscle_link and muscle_link.muscle_group.body_region in {"upper", "lower"}:
             category_key = muscle_link.muscle_group.body_region
@@ -75,26 +87,21 @@ def _build_exercise_categories(exercises):
     ]
 
 
-def _builder_exercise_kind(exercise):
-    """Infer the builder inputs from movement names and equipment as well as type."""
-    name = f"{exercise.name} {exercise.name_ar}".casefold()
-    equipment = " ".join(
-        link.equipment.name.casefold() for link in exercise.equipment_links.all()
-    )
-    timed_terms = ("plank", "wall sit", "hollow hold", "static hold", "dead hang")
-    cardio_terms = ("treadmill", "elliptical", "stationary bike", "rowing machine", "stepper")
-    if any(term in name for term in timed_terms):
-        return "timed"
-    if (
-        exercise.exercise_type == Exercise.ExerciseType.CARDIO
-        or any(term in name or term in equipment for term in cardio_terms)
-    ):
-        return "cardio"
-    if not equipment or equipment == "bodyweight":
-        return "bodyweight"
-    return "resistance"
+def program_revision(program):
+    """Fingerprint persisted editable data, including edits made through legacy routes."""
+    days = program.days.filter(user_id=program.user_id).order_by("pk")
+    entries = PlanExercise.objects.filter(plan__in=days).order_by("pk")
+    sets = PlanSet.objects.filter(plan_exercise__in=entries).order_by("pk")
+    data = [
+        program.name, program.goal,
+        list(days.values_list("pk", "name", "description", "estimated_duration_minutes", "program_order", "goal")),
+        list(entries.values_list("pk", "plan_id", "exercise_id", "order", "notes", "rest_seconds")),
+        list(sets.values_list("pk", "plan_exercise_id", "set_number", "reps", "duration_seconds", "weight_kg", "set_type")),
+    ]
+    return hashlib.sha256(json.dumps(data, separators=(",", ":")).encode()).hexdigest()
 
 
+@transaction.atomic
 def _program_builder_data(program):
     """Serialize a user's program and exercise library for the interactive builder."""
     exercise_relations = (
@@ -117,7 +124,8 @@ def _program_builder_data(program):
             "arabic_name": exercise.name_ar,
             "thumbnail": exercise.local_thumbnail_url,
             "animation": exercise.local_image_url,
-            "kind": _builder_exercise_kind(exercise),
+            "kind": exercise_kind(exercise),
+            "conditioning": exercise.name in CARDIO_CONDITIONING_EXERCISES,
             "description": exercise.description,
             "instructions": exercise.instructions,
             "muscles": [
@@ -186,7 +194,11 @@ def _program_builder_data(program):
         )
 
     return {
-        "program": {"id": program.pk, "name": program.name},
+        "program": {"id": program.pk, "name": program.name, "goal": program.goal},
+        "revision": program_revision(program),
+        "goals": dict(TrainingGoal.choices),
+        "default_day_goal": TrainingGoal.STRENGTH,
+        "cardio_ids": list(available_exercises_for_goal(TrainingGoal.CARDIO).values_list("pk", flat=True)),
         "days": days,
         "exercises": library,
         "retired_exercises": retired,
@@ -240,20 +252,28 @@ def plan_detail(request, pk):
     plan = get_object_or_404(WorkoutPlan, pk=pk, user=request.user, program__user=request.user)
 
     if request.method == "POST":
-        form = AddExerciseForm(request.POST, plan=plan)
-        if form.is_valid():
-            order = form.cleaned_data.get("order")
-            rest_seconds = form.cleaned_data.get("rest_seconds")
-            entry = PlanExercise.objects.create(
-                plan=plan,
-                exercise=form.cleaned_data["exercise"],
-                order=order if order is not None else plan.exercises.count() + 1,
-                rest_seconds=rest_seconds if rest_seconds is not None else 90,
+        with transaction.atomic():
+            # Share the builder's program write lock before validating goal eligibility.
+            if not WorkoutProgram.objects.filter(pk=plan.program_id, user=request.user).update(name=F("name")):
+                raise Http404
+            plan = get_object_or_404(
+                WorkoutPlan.objects.select_related("program"), pk=pk, user=request.user, program__user=request.user,
             )
-            for number in range(1, 4):
-                PlanSet.objects.create(plan_exercise=entry, set_number=number)
-            messages.success(request, _("Added %(name)s to the plan.") % {"name": entry.exercise.display_name()})
-            return redirect("plans:detail", pk=plan.pk)
+            form = AddExerciseForm(request.POST, plan=plan)
+            if form.is_valid():
+                order = form.cleaned_data.get("order")
+                rest_seconds = form.cleaned_data.get("rest_seconds")
+                entry = PlanExercise.objects.create(
+                    plan=plan,
+                    exercise=form.cleaned_data["exercise"],
+                    order=order if order is not None else plan.exercises.count() + 1,
+                    rest_seconds=rest_seconds if rest_seconds is not None else 90,
+                )
+                PlanSet.objects.bulk_create([
+                    PlanSet(plan_exercise=entry, set_number=number) for number in range(1, 4)
+                ])
+                messages.success(request, _("Added %(name)s to the plan.") % {"name": entry.exercise.display_name()})
+                return redirect("plans:detail", pk=plan.pk)
     else:
         form = AddExerciseForm(plan=plan)
 
@@ -276,7 +296,9 @@ def plan_detail(request, pk):
         {
             "plan": plan,
             "program": plan.program,
-            "exercise_categories": _build_exercise_categories(exercises),
+            "exercise_categories": _build_exercise_categories(
+                exercises, cardio_only=(plan.program.goal or plan.goal) == TrainingGoal.CARDIO,
+            ),
             "builder_data": builder_data,
             "selected_plan_id": plan.pk,
             "add_form": form,
@@ -312,6 +334,7 @@ def create_plan(request):
                 program = WorkoutProgram.objects.create(
                     user=request.user,
                     name=form.cleaned_data["program_name"],
+                    goal=form.cleaned_data["goal"],
                 )
                 plan = WorkoutPlan.objects.create(
                     user=request.user,
@@ -325,7 +348,10 @@ def create_plan(request):
             return redirect("plans:detail", pk=plan.pk)
     else:
         form = CreateWorkoutProgramForm()
-    return render(request, "plans/form.html", {"form": form, "action": _("Create workout program")})
+    cards = [(option, *GOAL_DETAILS[goal]) for option, goal in zip(form["goal"], TrainingGoal.values)]
+    return render(request, "plans/form.html", {
+        "form": form, "action": _("Create workout program"), "goal_cards": cards,
+    })
 
 
 @login_required
@@ -398,10 +424,15 @@ def add_set(request, pk):
 def delete_set(request, pk):
     set_obj = get_object_or_404(PlanSet, pk=pk, plan_exercise__plan__user=request.user)
     if request.method == "POST":
-        plan_pk = set_obj.plan_exercise.plan.pk
-        set_obj.delete()
-        messages.success(request, _("Set removed."))
-        return redirect("plans:detail", pk=plan_pk)
+        plan = set_obj.plan_exercise.plan
+        with transaction.atomic():
+            WorkoutProgram.objects.filter(pk=plan.program_id, user=request.user).update(name=F("name"))
+            if set_obj.plan_exercise.sets.exclude(pk=pk).exists():
+                set_obj.delete()
+                messages.success(request, _("Set removed."))
+            else:
+                messages.error(request, _("Each exercise needs at least one planned set."))
+        return redirect("plans:detail", pk=plan.pk)
     return redirect("plans:detail", pk=set_obj.plan_exercise.plan.pk)
 
 
@@ -439,11 +470,21 @@ def save_program_builder(request, pk):
             raise ValueError(_("A program can contain up to 50 workout days."))
 
         with transaction.atomic():
+            if not WorkoutProgram.objects.filter(pk=pk, user=request.user).update(name=F("name")):
+                raise Http404
             program = get_object_or_404(
-                WorkoutProgram.objects.select_for_update(),
+                WorkoutProgram.objects,
                 pk=pk,
                 user=request.user,
             )
+            if payload.get("revision") != program_revision(program):
+                return JsonResponse({
+                    "error": _("This program changed elsewhere. Reload before saving again."),
+                }, status=409)
+            goal = payload.get("goal", program.goal)
+            if (goal is not None and goal not in TrainingGoal.values) or (goal is None and program.goal):
+                raise ValueError(_("Select a valid training goal."))
+            switched_to_cardio = goal == TrainingGoal.CARDIO and program.goal != goal
             existing_days = {
                 day.pk: day
                 for day in WorkoutPlan.objects.filter(program=program, user=request.user)
@@ -454,7 +495,8 @@ def save_program_builder(request, pk):
             saved_records = {}
             seen_client_keys = set()
             program.name = program_name.strip()
-            program.save(update_fields=["name", "updated_at"])
+            program.goal = goal
+            program.save(update_fields=["name", "goal", "updated_at"])
 
             for day_order, day_data in enumerate(payload["days"], start=1):
                 if not isinstance(day_data, dict):
@@ -469,6 +511,7 @@ def save_program_builder(request, pk):
                     if day_id not in existing_days or day_id in seen_day_ids:
                         raise ValueError(_("A workout day could not be found in this program."))
                     plan = existing_days[day_id]
+                    plan.program = program
                     seen_day_ids.add(day_id)
                 else:
                     plan = WorkoutPlan(user=request.user, program=program)
@@ -510,11 +553,17 @@ def save_program_builder(request, pk):
                     seen_exercise_ids.add(exercise_id)
 
                     entry = PlanExercise.objects.filter(plan=plan, exercise_id=exercise_id).first()
-                    if entry is None:
+                    if entry is None or switched_to_cardio:
                         exercise = available_exercises_for_plan(plan).filter(pk=exercise_id).first()
                         if exercise is None:
+                            if switched_to_cardio and entry is not None:
+                                raise ValueError(
+                                    _("Remove %(exercise)s from %(day)s before switching to Cardio.")
+                                    % {"exercise": entry.exercise.display_name(), "day": plan.name}
+                                )
                             raise ValueError(_("Select an available exercise."))
-                        entry = PlanExercise(plan=plan, exercise=exercise)
+                        if entry is None:
+                            entry = PlanExercise(plan=plan, exercise=exercise)
                     rest_seconds = _validated_integer(
                         exercise_data.get("rest_seconds"),
                         _("Rest time"),
@@ -526,6 +575,8 @@ def save_program_builder(request, pk):
                         raise ValueError(_("Exercise notes must be 255 characters or fewer."))
                     if not isinstance(set_data_list, list) or len(set_data_list) > 50:
                         raise ValueError(_("Invalid set list."))
+                    if not set_data_list and (entry.pk is None or entry.sets.exists()):
+                        raise ValueError(_("Each exercise needs at least one planned set."))
 
                     entry.order = exercise_order
                     entry.rest_seconds = rest_seconds
@@ -601,10 +652,12 @@ def save_program_builder(request, pk):
                 client_keys[client_key] = plan.pk
                 saved_records[client_key] = {
                     "id": plan.pk,
+                    "name": plan.name,
                     "exercises": saved_exercises,
                 }
 
             program.days.filter(user=request.user).exclude(pk__in=saved_day_ids).delete()
+            revision = program_revision(program)
     except ValueError as error:
         return JsonResponse({"error": str(error)}, status=400)
     except Http404:
@@ -613,6 +666,7 @@ def save_program_builder(request, pk):
     return JsonResponse({
         "ok": True,
         "program_name": program.name,
+        "revision": revision,
         "days": client_keys,
         "records": saved_records,
     })

@@ -8,8 +8,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% trans "Workout and Fitness Planner" %}{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/fonts.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   {% if LANGUAGE_BIDI %}<link rel="stylesheet" href="{% static 'css/rtl.css' %}">{% endif %}
+  {% block styles %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
