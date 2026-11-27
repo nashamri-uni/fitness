@@ -3,7 +3,8 @@ from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import User, UserProfile
+from .forms import ProfileForm
+from .models import User, UserProfile, WeeklyWorkoutGoalHistory
 
 
 class RegisterTests(TestCase):
@@ -16,6 +17,7 @@ class RegisterTests(TestCase):
                 "username": "testuser",
                 "email": "test@example.com",
                 "gender": "male",
+                "weekly_workout_goal": "4",
                 "password1": "s3cure-password",
                 "password2": "s3cure-password",
             },
@@ -26,7 +28,31 @@ class RegisterTests(TestCase):
         self.assertTrue(user.has_usable_password())
         self.assertNotEqual(user.password, "s3cure-password")  # stored hashed
         self.assertEqual(user.role, User.Role.USER)
-        self.assertTrue(UserProfile.objects.filter(user=user).exists())
+        profile = UserProfile.objects.get(user=user)
+        self.assertEqual(profile.weekly_workout_goal, 4)
+        self.assertEqual(
+            WeeklyWorkoutGoalHistory.objects.get(user=user).goal_days,
+            4,
+        )
+
+    def test_registration_rejects_goals_outside_one_to_seven_days(self):
+        for goal in ("0", "8"):
+            with self.subTest(goal=goal):
+                response = self.client.post(
+                    reverse("accounts:register"),
+                    {
+                        "first_name": "Test",
+                        "last_name": "User",
+                        "username": f"testuser{goal}",
+                        "email": f"test{goal}@example.com",
+                        "gender": "male",
+                        "weekly_workout_goal": goal,
+                        "password1": "s3cure-password",
+                        "password2": "s3cure-password",
+                    },
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertFalse(User.objects.filter(username=f"testuser{goal}").exists())
 
     def test_mismatched_passwords_are_rejected(self):
         self.client.post(
@@ -75,12 +101,27 @@ class RegisterTests(TestCase):
                 "height_cm": "170",
                 "weight_kg": "65",
                 "fitness_goal": "strength",
+                "weekly_workout_goal": "5",
             },
         )
         self.assertRedirects(response, reverse("accounts:profile"))
         profile = UserProfile.objects.get(user=user)
         self.assertEqual(profile.fitness_goal, "strength")
         self.assertEqual(profile.weight_kg, 65.0)
+        self.assertEqual(profile.weekly_workout_goal, 5)
+        self.assertEqual(
+            WeeklyWorkoutGoalHistory.objects.get(user=user).goal_days,
+            5,
+        )
+
+    def test_profile_form_rejects_goals_outside_one_to_seven_days(self):
+        user = User.objects.create_user(username="dana", password="pw12345678")
+        form = ProfileForm(
+            data={"weekly_workout_goal": "8"},
+            instance=UserProfile(user=user),
+        )
+
+        self.assertFalse(form.is_valid())
 
 
 class LanguageTests(TestCase):
@@ -106,6 +147,9 @@ class LanguageTests(TestCase):
         self.assertIn('dir="rtl"', html)
         self.assertIn("الملف الشخصي", html)
         self.assertIn("css/rtl.css", html)
+        self.assertIn("الهدف الأسبوعي للتمرين (أيام)", html)
+        register_response = self.client.get(reverse("accounts:register"))
+        self.assertContains(register_response, "لم يتم تحديد هدف")
 
     def test_language_dropdown_is_an_auto_submit_form(self):
         """Issue #1: the dropdown applies the language itself, no Switch click."""

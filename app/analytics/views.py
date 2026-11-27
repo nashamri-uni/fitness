@@ -4,7 +4,11 @@ import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
+from plans.models import WorkoutPlan
+from workouts.models import WorkoutSession
+
 from .services import (
+    completed_sessions_this_week,
     exercise_progress,
     recent_personal_records,
     summary,
@@ -20,19 +24,21 @@ def dashboard(request):
     chart = weekly_volume(request.user, weeks=12)
     progress = exercise_progress(request.user)
     records = recent_personal_records(request.user)
-
-    from workouts.models import WorkoutSession
-
     recent_sessions = WorkoutSession.objects.filter(user=request.user).select_related("plan")[:8]
+    sessions_this_week = completed_sessions_this_week(request.user)
+    plans = WorkoutPlan.objects.filter(user=request.user)
+    activity = workout_activity(request.user)
 
     context = {
         "stats": stats,
         "chart": chart,
         "chart_json": json.dumps(chart),
-        "activity": workout_activity(request.user),
+        "activity": activity,
         "progress": progress,
         "records": records,
         "recent_sessions": recent_sessions,
+        "sessions_this_week": sessions_this_week,
+        "plans": plans,
     }
     return render(request, "analytics/dashboard.html", context)
 
