@@ -398,6 +398,62 @@ msgstr "تمت إزالة المجموعة."
 msgid "Log in"
 msgstr "تسجيل الدخول"
 
+#: templates/accounts/login.html
+msgid "Welcome back!"
+msgstr "مرحبًا بعودتك!"
+
+#: templates/accounts/login.html
+msgid "Sign in to continue"
+msgstr "سجّل الدخول للمتابعة"
+
+#: templates/accounts/login.html
+msgid "Your fitness journey starts here"
+msgstr "رحلتك الرياضية تبدأ هنا"
+
+#: templates/accounts/login.html
+msgid "Organize your workouts, track your progress, and reach your goals in one place."
+msgstr "نظّم تمارينك، وتابع تقدمك، وحقق أهدافك في مكان واحد."
+
+#: templates/accounts/login.html
+msgid "FitPlanner benefits"
+msgstr "مزايا FitPlanner"
+
+#: templates/accounts/login.html
+msgid "Track progress"
+msgstr "تابع تقدمك"
+
+#: templates/accounts/login.html
+msgid "Plan workouts"
+msgstr "خطط لتمارينك"
+
+#: templates/accounts/login.html
+msgid "Reach goals"
+msgstr "حقق أهدافك"
+
+#: templates/accounts/forms.py
+msgid "Enter your username"
+msgstr "أدخل اسم المستخدم"
+
+#: templates/accounts/forms.py
+msgid "Enter your password"
+msgstr "أدخل كلمة المرور"
+
+#: templates/accounts/forms.py
+msgid "Show password"
+msgstr "إظهار كلمة المرور"
+
+#: templates/accounts/forms.py
+msgid "Hide password"
+msgstr "إخفاء كلمة المرور"
+
+#: templates/accounts/login.html
+msgid "Don't have an account yet?"
+msgstr "ليس لديك حساب بعد؟"
+
+#: templates/accounts/login.html
+msgid "Create account"
+msgstr "إنشاء حساب"
+
 #: templates/accounts/login.html:18
 msgid "No account yet? <a href=\"%(register_url)s\">Register</a>."
 msgstr "ليس لديك حساب؟ <a href=\"%(register_url)s\">سجّل الآن</a>."
@@ -443,6 +499,94 @@ msgstr "تسجيل"
 #: templates/accounts/register.html:8
 msgid "Create an account"
 msgstr "إنشاء حساب"
+
+#: templates/accounts/register.html
+msgid "Join FitPlanner"
+msgstr "انضم إلى FitPlanner"
+
+#: templates/accounts/register.html
+msgid "Create your account and start building toward your goals."
+msgstr "أنشئ حسابك وابدأ التخطيط لتحقيق أهدافك."
+
+#: templates/accounts/register.html
+msgid "Personalized workout plans"
+msgstr "خطط تدريبية مخصصة"
+
+#: templates/accounts/register.html
+msgid "Progress and training insights"
+msgstr "متابعة التقدم والإحصائيات"
+
+#: templates/accounts/register.html
+msgid "A varied exercise library"
+msgstr "مكتبة تمارين متنوعة"
+
+#: templates/accounts/register.html
+msgid "Set up your profile to get started"
+msgstr "أنشئ ملفك الشخصي وابدأ الآن"
+
+#: accounts/forms.py
+msgid "Password"
+msgstr "كلمة المرور"
+
+#: accounts/forms.py
+msgid "Confirm password"
+msgstr "تأكيد كلمة المرور"
+
+#: accounts/forms.py
+msgid "Letters, numbers, and symbols are welcome."
+msgstr "يمكنك استخدام الحروف والأرقام والرموز."
+
+#: templates/accounts/register.html
+msgid "Password requirements"
+msgstr "متطلبات كلمة المرور"
+
+#: templates/accounts/register.html
+msgid "At least 8 characters"
+msgstr "8 أحرف على الأقل"
+
+#: templates/accounts/register.html
+msgid "Not met"
+msgstr "لم يتحقق"
+
+#: templates/accounts/register.html
+msgid "Met"
+msgstr "متحقق"
+
+#: templates/accounts/register.html
+msgid "Passwords match."
+msgstr "كلمتا المرور متطابقتان."
+
+#: templates/accounts/register.html
+msgid "Passwords do not match."
+msgstr "كلمتا المرور غير متطابقتين."
+
+#: accounts/forms.py
+msgid "Choose a username"
+msgstr "اختر اسم مستخدم"
+
+#: accounts/forms.py
+msgid "Enter your email address"
+msgstr "أدخل بريدك الإلكتروني"
+
+#: templates/accounts/register.html
+msgid "Create Account"
+msgstr "إنشاء الحساب"
+
+#: accounts/forms.py
+msgid "Choose a password"
+msgstr "اختر كلمة مرور"
+
+#: accounts/forms.py
+msgid "Confirm your password"
+msgstr "أعد إدخال كلمة المرور"
+
+#: accounts/forms.py
+msgid "The two password fields do not match."
+msgstr "حقلا كلمة المرور غير متطابقين."
+
+#: templates/accounts/register.html
+msgid "Already have an account?"
+msgstr "لديك حساب بالفعل؟"
 
 #: templates/analytics/dashboard.html:4 templates/base.html:19
 msgid "Dashboard"
