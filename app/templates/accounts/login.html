@@ -112,6 +112,7 @@
         </button>
       </form>
 
+      {% include "accounts/_google_button.html" %}
       <p class="auth-switch">
         {% trans "Don't have an account yet?" %}
         <a href="{% url 'accounts:register' %}">{% trans "Create account" %}</a>

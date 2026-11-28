@@ -232,6 +232,7 @@
         </button>
       </form>
 
+      {% include "accounts/_google_button.html" %}
       <p class="auth-switch">
         {% trans "Already have an account?" %}
         <a href="{% url 'accounts:login' %}">{% trans "Log in" %}</a>

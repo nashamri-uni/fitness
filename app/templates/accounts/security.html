@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Account security" %} · FitPlanner{% endblock %}
+{% block content %}
+<div class="card form-panel profile-panel">
+  <h2>{% trans "Account security" %}</h2>
+  <h3>{% trans "Password and email" %}</h3>
+  <ul>
+    <li><a href="{% url 'accounts:password' %}">{% trans "Set or change password" %}</a></li>
+    {% if can_change_email %}
+      <li><a href="{% url 'accounts:change_email' %}">{% trans "Change email address" %}</a></li>
+    {% endif %}
+  </ul>
+  {% if not email_change_enabled %}
+    <p class="muted">{% trans "Email changes require a configured mail service." %}</p>
+  {% elif not can_change_email %}
+    <p class="muted">{% trans "Set a password before changing your email address." %}</p>
+  {% endif %}
+  <h3>{% trans "Google connection" %}</h3>
+  {% if connected %}
+    <p>{% trans "Google is connected." %}</p>
+  {% else %}
+    <p>{% trans "Google is not connected." %}</p>
+  {% endif %}
+  {% if can_connect or connected and user.has_usable_password %}
+    <form method="post">
+      {% csrf_token %}
+      {% include "partials/form_fields.html" %}
+      {% if connected %}
+        <button type="submit" name="action" value="disconnect">{% trans "Disconnect Google" %}</button>
+      {% else %}
+        <button type="submit" name="action" value="connect">{% trans "Connect Google account" %}</button>
+      {% endif %}
+    </form>
+  {% elif connected %}
+    <p>{% trans "Set a password before disconnecting Google." %}</p>
+  {% elif show_google_setup_hint %}
+    <p>{% trans "Google sign-in is not configured." %}</p>
+  {% endif %}
+  <p><a href="{% url 'accounts:profile' %}">{% trans "Profile" %}</a></p>
+</div>
+{% endblock %}

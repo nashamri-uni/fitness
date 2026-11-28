@@ -2431,3 +2431,163 @@ msgstr[5] "%(count)s يوم تدريب متبقٍّ"
 #, python-format
 msgid "Page %(page)s of %(pages)s"
 msgstr "الصفحة %(page)s من %(pages)s"
+
+msgid "Account security"
+msgstr "أمان الحساب"
+
+msgid "Change email address"
+msgstr "تغيير عنوان البريد الإلكتروني"
+
+msgid "Check your new email address for a confirmation link."
+msgstr "تحقّق من بريدك الإلكتروني الجديد للعثور على رابط التأكيد."
+
+msgid "Choose the Google account connected to this FitPlanner account."
+msgstr "اختر حساب Google المرتبط بحساب FitPlanner هذا."
+
+msgid "Choose your gender and optionally set a weekly training goal."
+msgstr "حدّد جنسك، ويمكنك أيضًا تحديد هدف تدريب أسبوعي."
+
+msgid "Complete your profile"
+msgstr "أكمل ملفك الشخصي"
+
+msgid "Confirm email change"
+msgstr "تأكيد تغيير البريد الإلكتروني"
+
+msgid "Confirm your FitPlanner email change"
+msgstr "أكّد تغيير بريدك الإلكتروني في FitPlanner"
+
+msgid "Confirm your Google sign-in"
+msgstr "أكّد تسجيل دخولك عبر Google"
+
+msgid "Connect Google account"
+msgstr "ربط حساب Google"
+
+msgid "Continue with Google"
+msgstr "المتابعة باستخدام Google"
+
+msgid "Current password"
+msgstr "كلمة المرور الحالية"
+
+msgid "Disconnect Google"
+msgstr "إلغاء ربط حساب Google"
+
+msgid "Email address"
+msgstr "عنوان البريد الإلكتروني"
+
+msgid "Email changes require a configured mail service."
+msgstr "يتطلّب تغيير البريد الإلكتروني إعداد خدمة إرسال البريد."
+
+msgid "Email or username"
+msgstr "البريد الإلكتروني أو اسم المستخدم"
+
+msgid "Enter a different email address."
+msgstr "أدخل عنوان بريد إلكتروني مختلفًا."
+
+msgid "Enter a valid email address."
+msgstr "أدخل عنوان بريد إلكتروني صالحًا."
+
+msgid "Enter a valid email or username and password."
+msgstr "أدخل بريدًا إلكترونيًا أو اسم مستخدم وكلمة مرور صحيحة."
+
+msgid "Enter your current password."
+msgstr "أدخل كلمة مرورك الحالية."
+
+msgid "Enter your email or username"
+msgstr "أدخل بريدك الإلكتروني أو اسم المستخدم"
+
+msgid "Google account connected."
+msgstr "تم ربط حساب Google."
+
+msgid "Google account disconnected."
+msgstr "تم إلغاء ربط حساب Google."
+
+msgid "Google connection"
+msgstr "ربط حساب Google"
+
+msgid "Google is connected."
+msgstr "حساب Google مرتبط."
+
+msgid "Google is not connected."
+msgstr "حساب Google غير مرتبط."
+
+msgid "Google must provide a verified email address to continue."
+msgstr "للمتابعة، يجب أن يقدّم Google عنوان بريد إلكتروني تم التحقّق منه."
+
+msgid "Google sign-in could not be completed. Start again and try another sign-in method if needed."
+msgstr "تعذّر إكمال تسجيل الدخول عبر Google. أعد المحاولة أو استخدم طريقة دخول أخرى عند الحاجة."
+
+msgid "Google sign-in is not configured."
+msgstr "لم يُعَدّ تسجيل الدخول عبر Google."
+
+msgid "Google sign-in was cancelled."
+msgstr "أُلغي تسجيل الدخول عبر Google."
+
+msgid "New email address"
+msgstr "عنوان البريد الإلكتروني الجديد"
+
+msgid "OR"
+msgstr "أو"
+
+#, python-format
+msgid "Open this link within 15 minutes to confirm your email change: %(url)s"
+msgstr "افتح هذا الرابط خلال ١٥ دقيقة لتأكيد تغيير بريدك الإلكتروني: %(url)s"
+
+msgid "Password and email"
+msgstr "كلمة المرور والبريد الإلكتروني"
+
+msgid "Password saved."
+msgstr "تم حفظ كلمة المرور."
+
+msgid "Save and continue"
+msgstr "حفظ ومتابعة"
+
+msgid "Select your gender"
+msgstr "اختر جنسك"
+
+msgid "Set a password before changing your email address."
+msgstr "عيّن كلمة مرور قبل تغيير عنوان بريدك الإلكتروني."
+
+msgid "Set a password before disconnecting Google."
+msgstr "عيّن كلمة مرور قبل إلغاء ربط حساب Google."
+
+msgid "Set or change password"
+msgstr "تعيين كلمة المرور أو تغييرها"
+
+msgid "Sign in again with your connected Google account before setting a password."
+msgstr "سجّل الدخول مجددًا بحساب Google المرتبط قبل تعيين كلمة مرور."
+
+msgid "Sign in to your existing FitPlanner account, then connect Google in account security."
+msgstr "سجّل الدخول إلى حسابك الحالي في FitPlanner، ثم اربط حساب Google من صفحة أمان الحساب."
+
+msgid "That Google account cannot be connected to this FitPlanner account."
+msgstr "يتعذّر ربط حساب Google هذا بحساب FitPlanner الحالي."
+
+msgid "That Google account could not be linked or registered. Try again."
+msgstr "تعذّر ربط حساب Google هذا أو إنشاء حساب باستخدامه. أعد المحاولة."
+
+msgid "The confirmation email could not be sent. Try again later."
+msgstr "تعذّر إرسال رسالة التأكيد. حاول مجددًا لاحقًا."
+
+msgid "This email address is already in use."
+msgstr "عنوان البريد الإلكتروني هذا مستخدم بالفعل."
+
+msgid "This email confirmation link is invalid or has expired."
+msgstr "رابط تأكيد البريد الإلكتروني غير صالح أو انتهت صلاحيته."
+
+msgid "This username is already in use."
+msgstr "اسم المستخدم هذا مستخدم بالفعل."
+
+msgid "Too many attempts. Try again later."
+msgstr "محاولات كثيرة. حاول مجددًا لاحقًا."
+
+msgid "Verify this email address for your FitPlanner account."
+msgstr "أكّد عنوان البريد الإلكتروني هذا لحسابك في FitPlanner."
+
+msgid "Your Google sign-in session has expired. Start again."
+msgstr "انتهت صلاحية جلسة تسجيل الدخول عبر Google. ابدأ مجددًا."
+
+msgid "Your email address has been verified and updated."
+msgstr "تم التحقّق من عنوان بريدك الإلكتروني وتحديثه."
+
+msgid "weekly workout goal history"
+msgstr "سجل أهداف التدريب الأسبوعية"

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Complete your profile" %} · FitPlanner{% endblock %}
+{% block primary_navigation %}{% endblock %}
+{% block content %}
+<div class="card form-panel profile-panel">
+  <h2>{% trans "Complete your profile" %}</h2>
+  <p>{% trans "Choose your gender and optionally set a weekly training goal." %}</p>
+  <form method="post">
+    {% csrf_token %}
+    {% include "partials/form_fields.html" %}
+    <button type="submit">{% trans "Save and continue" %}</button>
+  </form>
+</div>
+{% endblock %}

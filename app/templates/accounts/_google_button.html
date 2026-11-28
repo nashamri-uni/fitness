@@ -1,0 +1,14 @@
+{% load i18n static %}
+{% if google_auth_enabled %}
+  <div class="auth-divider"><span>{% trans "OR" %}</span></div>
+  <form method="post" action="{% url 'google_login' %}" class="auth-google-form">
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit" class="auth-google-button">
+      <img src="{% static 'images/auth/google-g.png' %}" width="18" height="18" alt="">
+      <span>{% trans "Continue with Google" %}</span>
+    </button>
+  </form>
+{% elif show_google_setup_hint %}
+  <p class="auth-field-hint">{% trans "Google sign-in is not configured." %}</p>
+{% endif %}
