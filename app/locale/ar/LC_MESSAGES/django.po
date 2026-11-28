@@ -2194,3 +2194,240 @@ msgstr[2] "تمرينان متاحان"
 msgstr[3] "%(available)s تمارين متاحة"
 msgstr[4] "%(available)s تمرينًا متاحًا"
 msgstr[5] "%(available)s تمرين متاح"
+
+msgid "1 month"
+msgstr "شهر واحد"
+
+msgid "3 months"
+msgstr "٣ أشهر"
+
+msgid "6 months"
+msgstr "٦ أشهر"
+
+msgid "Activity grouping"
+msgstr "تجميع النشاط"
+
+msgid "Add exercises to a workout day to start training."
+msgstr "أضف تمارين إلى يوم تدريب لتبدأ التمرين."
+
+msgid "All muscle groups"
+msgstr "كل المجموعات العضلية"
+
+msgid "All record types"
+msgstr "كل أنواع الأرقام القياسية"
+
+msgid "All time"
+msgstr "منذ البداية"
+
+msgid "Best in range"
+msgstr "أفضل قيمة خلال الفترة"
+
+msgid "Change in range"
+msgstr "التغيّر خلال الفترة"
+
+msgid "Clear filters"
+msgstr "مسح الفلاتر"
+
+msgid "Completed sets by primary muscle group"
+msgstr "المجموعات المكتملة حسب العضلات الأساسية"
+
+msgid "Consecutive weeks through this week"
+msgstr "أسابيع متتالية حتى هذا الأسبوع"
+
+msgid "Continue Workout"
+msgstr "متابعة التمرين"
+
+msgid "Current personal bests"
+msgstr "أفضل الأرقام الحالية"
+
+msgid "Dashboard sections"
+msgstr "أقسام لوحة التحكم"
+
+msgid "Edit goal"
+msgstr "تعديل الهدف"
+
+msgid "Estimated one-rep max"
+msgstr "الحد الأقصى التقديري لتكرار واحد"
+
+msgid "Exercise performance"
+msgstr "أداء التمرين"
+
+msgid "Finish a workout with logged sets to see exercise performance here."
+msgstr "أكمل جلسة فيها مجموعات مسجّلة ليظهر أداء التمرين هنا."
+
+msgid "Heaviest logged set with completed reps per workout."
+msgstr "أثقل وزن مسجّل في مجموعة بتكرارات مكتملة لكل جلسة."
+
+msgid "Highest Epley estimate per workout, using weighted sets of 1 to 10 reps."
+msgstr "أعلى تقدير بطريقة إيبلي لكل جلسة، باستخدام المجموعات الموزونة من تكرار واحد إلى ١٠ تكرارات."
+
+msgid "Last full week vs. the week before"
+msgstr "آخر أسبوع كامل مقارنةً بالأسبوع الذي سبقه"
+
+msgid "Latest completed workout"
+msgstr "آخر جلسة مكتملة"
+
+msgid "Latest value"
+msgstr "آخر قيمة"
+
+msgid "Log another comparable workout to see a change."
+msgstr "سجّل جلسة أخرى قابلة للمقارنة لعرض التغيّر."
+
+msgid "Logged performance in completed workouts"
+msgstr "الأداء المسجّل في الجلسات المكتملة"
+
+msgid "Longest hold"
+msgstr "أطول مدة ثبات"
+
+msgid "Longest logged hold per workout."
+msgstr "أطول مدة ثبات مسجّلة لكل جلسة."
+
+msgid "Maximum repetitions"
+msgstr "أقصى عدد للتكرارات"
+
+msgid "Maximum weight"
+msgstr "أقصى وزن"
+
+msgid "Metric"
+msgstr "المقياس"
+
+msgid "Monday to Sunday"
+msgstr "من الاثنين إلى الأحد"
+
+msgid "Most recent personal bests"
+msgstr "أحدث الأرقام القياسية"
+
+msgid "Most repetitions in a single set per workout."
+msgstr "أكبر عدد تكرارات في مجموعة واحدة لكل جلسة."
+
+msgid "Muscle distribution"
+msgstr "توزيع التدريب على العضلات"
+
+msgid "No completed sets in this time range."
+msgstr "لا توجد مجموعات مكتملة خلال هذه الفترة."
+
+msgid "No completed workout"
+msgstr "لا توجد جلسة مكتملة"
+
+msgid "No matching performance data in this time range. Try a different metric or a longer range."
+msgstr "لا توجد بيانات لهذا المقياس خلال الفترة المحددة. اختر مقياسًا آخر أو فترة أطول."
+
+msgid "No personal bests match these filters."
+msgstr "لا توجد أرقام قياسية تطابق هذه الفلاتر."
+
+msgid "Overview"
+msgstr "نظرة عامة"
+
+msgid "Personal Records"
+msgstr "الأرقام القياسية"
+
+msgid "Personal bests"
+msgstr "الأرقام القياسية"
+
+msgid "Personal bests by exercise"
+msgstr "الأرقام القياسية حسب التمرين"
+
+msgid "Personal records pages"
+msgstr "صفحات الأرقام القياسية"
+
+msgctxt "dashboard tab"
+msgid "Progress"
+msgstr "التقدم الرياضي"
+
+msgid "Set a weekly training goal in your profile."
+msgstr "حدّد هدف التدريب الأسبوعي في ملفك الشخصي."
+
+msgid "Sets are split evenly when an exercise has several primary muscles."
+msgstr "تُقسّم المجموعات بالتساوي إذا كان للتمرين أكثر من مجموعة عضلية أساسية."
+
+msgid "Since previous comparable workout"
+msgstr "مقارنةً بالجلسة السابقة القابلة للمقارنة"
+
+msgid "Start Workout"
+msgstr "بدء التمرين"
+
+msgid "Starting value"
+msgstr "القيمة الأولى"
+
+msgid "Sum of logged exercise time per workout."
+msgstr "إجمالي مدة التمرين المسجّلة لكل جلسة."
+
+msgid "This week"
+msgstr "هذا الأسبوع"
+
+msgid "Time range"
+msgstr "الفترة الزمنية"
+
+msgid "Total duration"
+msgstr "إجمالي المدة"
+
+msgid "Total training duration"
+msgstr "إجمالي مدة التدريب"
+
+msgid "Training activity"
+msgstr "نشاط التدريب"
+
+msgid "Training day"
+msgstr "يوم تدريب"
+
+msgid "Training days"
+msgstr "أيام التدريب"
+
+msgid "Training streak"
+msgstr "أسابيع التدريب المتتالية"
+
+msgid "Training summary"
+msgstr "ملخص التدريب"
+
+msgid "Unclassified"
+msgstr "دون تصنيف"
+
+msgid "View chart data"
+msgstr "عرض بيانات الرسم البياني"
+
+msgid "View session"
+msgstr "عرض الجلسة"
+
+msgid "Weekly goal progress"
+msgstr "التقدّم نحو الهدف الأسبوعي"
+
+msgid "Weekly goal reached"
+msgstr "تحقّق الهدف الأسبوعي"
+
+msgid "Weekly training goal"
+msgstr "هدف التدريب الأسبوعي"
+
+msgid "Workout actions"
+msgstr "ابدأ التدريب"
+
+msgid "Workout in progress"
+msgstr "تمرين قيد التنفيذ"
+
+msgid "Your latest workout will appear here after you finish a session."
+msgstr "ستظهر هنا آخر جلسة تدريب بعد إكمالها."
+
+msgid "Your personal bests will appear here as you log sets."
+msgstr "ستظهر أرقامك القياسية هنا عند تسجيل المجموعات."
+
+msgid "kg × reps"
+msgstr "كغ × تكرار"
+
+msgid "s"
+msgstr "ث"
+
+msgid "vs. same time last week"
+msgstr "مقارنةً بالفترة نفسها من الأسبوع الماضي"
+
+#, python-format
+msgid "%(count)s training day remaining"
+msgid_plural "%(count)s training days remaining"
+msgstr[0] "لا توجد أيام تدريب متبقية"
+msgstr[1] "يوم تدريب واحد متبقٍّ"
+msgstr[2] "يوما تدريب متبقيان"
+msgstr[3] "%(count)s أيام تدريب متبقية"
+msgstr[4] "%(count)s يومًا تدريبيًا متبقيًا"
+msgstr[5] "%(count)s يوم تدريب متبقٍّ"
+
+#, python-format
+msgid "Page %(page)s of %(pages)s"
+msgstr "الصفحة %(page)s من %(pages)s"

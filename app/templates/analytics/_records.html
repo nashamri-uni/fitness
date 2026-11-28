@@ -1,0 +1,95 @@
+{% load i18n l10n %}
+<section class="analytics-panel analytics-records-summary">
+  <header class="analytics-panel-heading">
+    <div class="analytics-record-heading">
+      <span class="analytics-trophy" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4m-4 1v5m-4 2h8"/></svg>
+      </span>
+      <h2>{% trans "Current personal bests" %}</h2>
+    </div>
+    <dl class="analytics-bests">
+      <div><dt>{% trans "Personal bests" %}</dt><dd data-number="{{ bests.count|unlocalize }}">{{ bests.count }}</dd></div>
+      <div><dt>{% trans "Exercises" %}</dt><dd data-number="{{ bests.exercises|unlocalize }}">{{ bests.exercises }}</dd></div>
+    </dl>
+  </header>
+  {% if recent_records %}
+    <h3>{% trans "Most recent personal bests" %}</h3>
+    <ul class="analytics-recent-records">
+      {% for record in recent_records %}
+        <li>
+          <div class="analytics-record-exercise">
+            {% include "analytics/_thumbnail.html" with exercise=record.exercise only %}
+            <div>
+              <a href="{% url 'exercises:detail' record.exercise_id %}"><bdi>{{ record.exercise.display_name }}</bdi></a>
+              <span>{{ record.get_record_type_display }}</span>
+            </div>
+          </div>
+          <div class="analytics-record-achievement">
+            {% include "analytics/_record_metric.html" %}
+            {% include "analytics/_record_detail.html" %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="analytics-empty">{% trans "Your personal bests will appear here as you log sets." %}</p>
+  {% endif %}
+</section>
+
+{% if bests.count %}
+  <section class="analytics-panel">
+    <header class="analytics-panel-heading"><h2>{% trans "Personal bests by exercise" %}</h2></header>
+    <form method="get" class="analytics-filters analytics-filters--records">
+      <input type="hidden" name="tab" value="records">
+      <label>
+        <span>{% trans "Exercise" %}</span>
+        <span class="analytics-search">
+          {% include "analytics/_search_icon.html" %}
+          <input type="search" name="q" placeholder="{% trans 'Search exercises' %}" value="{{ q }}" maxlength="120">
+        </span>
+      </label>
+      <label><span>{% trans "Muscle group" %}</span><select name="muscle">
+        <option value="">{% trans "All muscle groups" %}</option>
+        {% for group in muscles %}<option value="{{ group.pk|unlocalize }}"{% if muscle_id == group.pk %} selected{% endif %}>{{ group.display_name }}</option>{% endfor %}
+      </select></label>
+      <label><span>{% trans "Record type" %}</span><select name="type">
+        <option value="">{% trans "All record types" %}</option>
+        {% for key, label in record_types %}<option value="{{ key }}"{% if record_type == key %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+      <button type="submit">{% trans "Apply" %}</button>
+      {% if q or muscle_id or record_type %}<a class="btn btn-secondary" href="?tab=records">{% trans "Clear filters" %}</a>{% endif %}
+    </form>
+    {% if record_groups %}
+      <div class="analytics-record-groups">
+        {% for exercise, records in record_groups %}
+          <article class="analytics-record-group">
+            <header class="analytics-record-exercise">
+              {% include "analytics/_thumbnail.html" with exercise=exercise only %}
+              <h3><a href="{% url 'exercises:detail' exercise.pk %}"><bdi>{{ exercise.display_name }}</bdi></a></h3>
+            </header>
+            <ul>
+              {% for record in records %}
+                <li>
+                  <span>{{ record.get_record_type_display }}</span>
+                  <div class="analytics-record-achievement">
+                    {% include "analytics/_record_metric.html" %}
+                    {% include "analytics/_record_detail.html" %}
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </article>
+        {% endfor %}
+      </div>
+      {% if record_page.has_other_pages %}
+        <nav class="analytics-pagination" aria-label="{% trans 'Personal records pages' %}">
+          {% if record_page.has_previous %}<a class="btn btn-secondary" href="?{{ record_query }}&amp;page={{ record_page.previous_page_number|unlocalize }}">{% trans "Previous" %}</a>{% endif %}
+          <span data-localize-digits>{% blocktrans with page=record_page.number pages=record_page.paginator.num_pages %}Page {{ page }} of {{ pages }}{% endblocktrans %}</span>
+          {% if record_page.has_next %}<a class="btn btn-secondary" href="?{{ record_query }}&amp;page={{ record_page.next_page_number|unlocalize }}">{% trans "Next" %}</a>{% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <p class="analytics-empty">{% trans "No personal bests match these filters." %}</p>
+    {% endif %}
+  </section>
+{% endif %}

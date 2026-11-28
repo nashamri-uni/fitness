@@ -98,6 +98,17 @@ def start_session(user, plan, name=None):
     return session
 
 
+def unfinished_sessions(user):
+    return WorkoutSession.objects.filter(user=user, ended_at__isnull=True).order_by("-started_at", "-pk")
+
+
+@transaction.atomic
+def start_or_resume_session(user, plan):
+    """Serialize user starts before reading active sessions, including on SQLite."""
+    get_user_model().objects.filter(pk=user.pk).update(last_login=F("last_login"))
+    return unfinished_sessions(user).first() or start_session(user, plan)
+
+
 def finish_session(session, notes="", rating=None):
     """Close a session and store the performance summary."""
     session.ended_at = timezone.now()

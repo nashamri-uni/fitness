@@ -1,0 +1,7 @@
+{% load i18n %}
+{% firstof exercise.local_thumbnail_url exercise.local_image_url as thumbnail %}
+{% if thumbnail %}
+  <img class="analytics-thumb" src="{{ thumbnail }}" alt="" width="44" height="44" loading="lazy">
+{% else %}
+  <span class="analytics-thumb analytics-thumb--placeholder" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M6.5 7v10m11-10v10m-14-8v6m17-6v6m-14-3h11M2 12h1.5m17 0H22"/></svg></span>
+{% endif %}

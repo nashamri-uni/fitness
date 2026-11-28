@@ -123,7 +123,7 @@ class SessionTests(TestCase):
         self.assertContains(response, f'src="{self.exercise.local_thumbnail_url}"')
         self.assertContains(response, f'href="{reverse("exercises:detail", args=[self.exercise.pk])}"')
         self.assertNotContains(response, f'src="{self.exercise.local_image_url}"')
-        self.assertEqual(self.client.get(reverse("workouts:records")).status_code, 200)
+        self.assertRedirects(self.client.get(reverse("workouts:records")), reverse("analytics:dashboard") + "?tab=records")
 
     def log_json(self, entry, **changes):
         data = {"set_number": 1, "reps_completed": 8, "weight_kg": 80, "duration_seconds": 0}
