@@ -10,6 +10,7 @@
     {% blocktrans with username=user.username %}Signed in as <strong>{{ username }}</strong>.{% endblocktrans %}
     {% if user.is_project_admin %}<span class="pill">{% trans "Administrator" %}</span>{% endif %}
   </p>
+  <p>{% trans "Email address" %} <strong><bdi>{{ user.email|default:"—" }}</bdi></strong></p>
 
   <form method="post">
     {% csrf_token %}
@@ -23,5 +24,6 @@
       <button type="submit">{% trans "Save changes" %}</button>
     </div>
   </form>
+  <p><a href="{% url 'accounts:security' %}">{% trans "Account security" %}</a></p>
 </div>
 {% endblock %}

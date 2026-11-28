@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Account security" %} · FitPlanner{% endblock %}
+{% block content %}
+<div class="card form-panel profile-panel">
+  {% if needs_google_reauthentication %}
+    <h2>{% trans "Confirm your Google sign-in" %}</h2>
+    <p>{% trans "Sign in again with your connected Google account before setting a password." %}</p>
+    <form method="post" action="{% url 'accounts:reauthenticate_google' %}">
+      {% csrf_token %}
+      <button type="submit">{% trans "Continue with Google" %}</button>
+    </form>
+  {% else %}
+    <h2>{{ heading }}</h2>
+    <form method="post">
+      {% csrf_token %}
+      {% if confirm_address %}
+        <p>{% trans "Verify this email address for your FitPlanner account." %} <strong><bdi>{{ confirm_address }}</bdi></strong></p>
+      {% else %}
+        {{ form.as_p }}
+      {% endif %}
+      <button type="submit">{% trans "Continue" %}</button>
+    </form>
+  {% endif %}
+  <p><a href="{% url 'accounts:security' %}">{% trans "Account security" %}</a></p>
+</div>
+{% endblock %}

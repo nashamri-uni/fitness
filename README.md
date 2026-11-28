@@ -14,7 +14,7 @@ system with a custom user model.
 
 | Area | What you get |
 |---|---|
-| Accounts | Register / login / logout, fitness profile (date of birth, height, weight, fitness goal) |
+| Accounts | Email registration, username or email login, optional Google login, and fitness profile |
 | Exercise library | Browse, search and filter exercises by muscle group, equipment, type and difficulty |
 | Workout programs | Build custom programs from freely named and ordered workout days; add exercises, sets, reps, weight, duration and rest |
 | Training sessions | Start a session from a plan, log each set live, finish with duration / rating / notes |
@@ -121,6 +121,88 @@ uv run python manage.py changepassword <username>
 uv run python manage.py shell         # Django shell inside the environment
 ```
 
+### Email and Google authentication
+
+Password registration requires a unique username and a valid email address. You can sign in
+with either identifier. Existing users with blank or shared legacy addresses can still use
+their unambiguous usernames. Password hashing and admin sessions use Django authentication.
+
+#### Set up Google for local development
+
+1. Create or select a Google Cloud project and open **Google Auth Platform**. In **Branding**,
+   configure the FitPlanner app name, support email and developer contact details.
+2. In **Audience**, choose **External** and use **Testing** for local trials. Add the Google
+   accounts that will test the integration under **Test users**. For a workspace-restricted
+   app, choose the audience allowed by your organization instead.
+3. In **Data Access**, use `openid`, `email`, and `profile` as the identity scopes.
+4. In **Clients**, create an OAuth client of type **Web application**. Add this exact
+   **Authorized redirect URI**.
+
+   ```text
+   http://127.0.0.1:8000/accounts/google/login/callback/
+   ```
+
+   To use `localhost`, also register `http://localhost:8000/accounts/google/login/callback/`
+   and use that host for the entire browser flow.
+5. From `app/`, copy `.env.example` to `.env` and set `GOOGLE_CLIENT_ID` and
+   `GOOGLE_CLIENT_SECRET` locally. Exported environment variables take precedence.
+   Keep the client secret out of source control, browsers and logs.
+6. Install `requirements.txt`, back up any existing database, and run
+   `uv run python manage.py migrate`. Start `uv run python manage.py runserver`.
+7. Visit `http://127.0.0.1:8000/accounts/login/` and choose **Continue with Google**.
+   A new Google user completes their profile before going to the dashboard. To connect an
+   existing account, first sign in with its password and use **Profile → Account security**.
+
+The Google button appears when both environment variables are set. The OAuth callback checks
+state, PKCE, the signed Google identity token and its verified email. Connections use Google's
+stable subject identifier. The existing FitPlanner password is required to connect or disconnect
+Google from a password account. A Google-only account can set a password after a recent Google
+login, then confirm that password to disconnect Google.
+
+[Google Auth Platform setup](https://support.google.com/cloud/answer/15544987) ·
+[Google OAuth web-server flow](https://developers.google.com/identity/protocols/oauth2/web-server) ·
+[Google branding guidelines](https://developers.google.com/identity/branding-guidelines) ·
+[django-allauth Google provider](https://docs.allauth.org/en/latest/socialaccount/providers/google.html)
+
+#### Existing email addresses and database migration
+
+`accounts.0003_authentication_identity` keeps all user IDs and stored emails. On SQLite it
+adds a profile-completion flag and an indexed email guard for inserts and changed addresses.
+Existing blank or duplicate rows are grandfathered, and an occupied legacy address stays
+reserved. Its owners can keep signing in by username. Email login refuses an identifier when
+it matches more than one account. The query below identifies duplicate groups by account ID.
+
+```sql
+SELECT group_concat(id) AS account_ids, COUNT(*) AS accounts
+FROM accounts_user
+WHERE trim(email) <> ''
+GROUP BY lower(trim(email))
+HAVING COUNT(*) > 1;
+```
+
+To resolve a group, identify the legitimate address owner and let the other authenticated
+users confirm distinct addresses in **Account security → Change email address**. The flow
+requires the current password and a 15-minute link sent to the new address. Configure the SMTP
+variables from `.env.example` to enable it. For a user whose username is itself an ambiguous
+identifier, use an administrator-assisted ownership check before updating the relevant email.
+The migration reports IDs for any legacy internationalized addresses stored in non-ASCII form.
+Verify those addresses and normalize their domains to ASCII IDNA values before migrating.
+Future migrations that rebuild the SQLite user table must reinstall its email triggers and index.
+
+#### Deployment
+
+Use HTTPS and configure the corresponding HTTPS OAuth redirect URI on a separate production
+Google client. Set `DJANGO_DEBUG=false`, a private `DJANGO_SECRET_KEY`, and exact
+`DJANGO_ALLOWED_HOSTS`. That enables HTTPS redirects and secure session and CSRF cookies.
+If a trusted TLS proxy overwrites the incoming header, set
+`SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")` in production settings.
+Set `ALLAUTH_TRUSTED_PROXY_COUNT` to the number of trusted forwarding hops if that proxy
+controls the forwarded IP chain, so rate limits use the real client address.
+Use a shared cache across workers for login rate limits. The optional `DJANGO_CACHE_LOCATION`
+accepts a Redis URL when the production environment has the `redis` Python client installed.
+Configure an authenticated SMTP service for email verification. Exclude OAuth callback
+query strings and email confirmation URLs from access logs.
+
 ### Rebuilding the Arabic translations (optional)
 
 The compiled Arabic catalog (`app/locale/ar/LC_MESSAGES/django.mo`) is committed, so translation
@@ -213,7 +295,7 @@ Database tables and columns mirror the schema in Chapter 3 of the design report 
 uv run python manage.py test
 ```
 
-45 tests cover registration/authentication, library filtering and ownership, plan and set editing,
+The suite covers registration/authentication, library filtering and ownership, plan and set editing,
 live session logging, personal-record detection, improvement metrics and streaks, the dashboard and
 progress pages, and language switching (including Arabic data names).
 

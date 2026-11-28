@@ -4,7 +4,12 @@ from django.urls import include, path
 from django.views.generic.base import RedirectView
 from django.views.i18n import set_language
 
+from accounts import google
+
 urlpatterns = [
+    # The provider reverses these names without the project namespace.
+    path("accounts/google/login/", google.google_login, name="google_login"),
+    path("accounts/google/login/callback/", google.google_callback, name="google_callback"),
     path("admin/", admin.site.urls),
     path(
         "",

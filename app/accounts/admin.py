@@ -2,7 +2,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
+from .forms import AdminLoginForm
 from .models import User, UserProfile
+
+admin.site.login_form = AdminLoginForm
 
 
 @admin.register(User)
@@ -11,6 +14,10 @@ class ProjectUserAdmin(UserAdmin):
     list_filter = ("role", "gender")
     fieldsets = UserAdmin.fieldsets + (("Project fields", {"fields": ("gender", "role")}),)
     add_fieldsets = UserAdmin.add_fieldsets + (("Project fields", {"fields": ("gender", "role")}),)
+
+    def get_readonly_fields(self, request, obj=None):
+        fields = super().get_readonly_fields(request, obj)
+        return (*fields, "email") if obj else fields
 
 
 @admin.register(UserProfile)

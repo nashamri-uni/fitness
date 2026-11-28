@@ -21,6 +21,7 @@ class User(AbstractUser):
         FEMALE = "female", _("Female")
 
     gender = models.CharField(max_length=20, choices=Gender.choices, default=Gender.MALE, db_column="Gender", verbose_name=_("Gender"))
+    requires_google_profile = models.BooleanField(default=False, db_default=False, db_column="Requires_Google_Profile")
     role = models.CharField(
         max_length=10,
         choices=Role.choices,
